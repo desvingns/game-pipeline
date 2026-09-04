@@ -1,0 +1,67 @@
+{
+  "id": "flat-vector",
+  "name": "Flat vector, no outline",
+  "family": "vector-look raster",
+  "reference_games": ["modern flat mobile puzzle UI", "material-style casual games"],
+  "why": "Cheapest style to keep consistent — pure flat fills, no contour and no shading means there are very few degrees of freedom for a model to drift in. The cost is a weaker silhouette on a busy battlefield.",
+
+  "prompt_skeleton": {
+    "style_medium": "2D game asset, flat vector illustration, solid colour shapes, no outline, no gradient, no texture",
+    "lighting_mood": "flat lighting, no shading, colour separation carries the form",
+    "constraints": [
+      "transparent background",
+      "asset fills the canvas with a {margin_pct}% margin",
+      "shapes readable at {min_side_px} pixels",
+      "no text, no watermark"
+    ],
+    "avoid": ["outlines", "gradients", "shadows", "texture, grain, noise", "3D render look"]
+  },
+
+  "rules": {
+    "alpha": {
+      "required": true,
+      "background_must_be_transparent": true,
+      "max_semi_transparent_ratio": 0.12,
+      "max_opaque_area_ratio": 0.92
+    },
+    "colors": {
+      "max_distinct_after_quantise": 14,
+      "quantise_bits": 5,
+      "max_tones_per_object": 2,
+      "palette_mode": "locked",
+      "max_palette_distance": 30.0
+    },
+    "outline": {
+      "required": false,
+      "forbidden": true,
+      "max_edge_dark_coverage": 0.2
+    },
+    "geometry": {
+      "size_multiple": 8,
+      "max_aspect_ratio": 2.5
+    },
+    "provenance": { "required": true }
+  },
+
+  "tiers": {
+    "A": {
+      "label": "key art",
+      "use": ["splash", "store icon", "promo"],
+      "min_side_px": 1024,
+      "max_side_px": 2048,
+      "overrides": { "colors": { "max_distinct_after_quantise": 40 } }
+    },
+    "B": {
+      "label": "gameplay",
+      "use": ["tower", "enemy", "projectile", "tile", "ui icon"],
+      "min_side_px": 48,
+      "max_side_px": 512,
+      "overrides": {}
+    }
+  },
+
+  "unit_design_rules": [
+    "Without a contour, adjacent skeletal parts must differ in value or hue, otherwise the joint disappears into a single flat mass.",
+    "Silhouette does the whole job — check every asset in solid black before accepting it."
+  ]
+}

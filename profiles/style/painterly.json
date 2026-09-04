@@ -1,0 +1,64 @@
+{
+  "id": "painterly",
+  "name": "Painterly / illustrated",
+  "family": "raster, high freedom",
+  "reference_games": ["hand-painted strategy and card-game art"],
+  "why": "The prettiest and the most expensive to keep consistent. Brush texture and soft light give a validator almost nothing to measure, so quality control falls back on human review — which is the cost this pipeline exists to remove. Use it for tier-A key art, and think hard before using it for hundreds of gameplay assets.",
+  "human_review_cost": "high",
+
+  "prompt_skeleton": {
+    "style_medium": "digital painting, painterly brushwork, soft edges, rich value range",
+    "lighting_mood": "single key light from {light_direction}, ambient occlusion in the crevices, consistent colour temperature",
+    "constraints": [
+      "transparent background",
+      "asset fills the canvas with a {margin_pct}% margin",
+      "consistent brush scale across the asset set",
+      "no text, no watermark"
+    ],
+    "avoid": ["photobashing", "visible seams", "inconsistent light direction", "cropped edges"]
+  },
+
+  "rules": {
+    "alpha": {
+      "required": true,
+      "background_must_be_transparent": true,
+      "max_semi_transparent_ratio": 0.35,
+      "max_opaque_area_ratio": 0.95
+    },
+    "colors": {
+      "max_distinct_after_quantise": 512,
+      "quantise_bits": 4,
+      "max_tones_per_object": 64,
+      "palette_mode": "advisory",
+      "max_palette_distance": 90.0
+    },
+    "outline": { "required": false },
+    "geometry": {
+      "size_multiple": 4,
+      "max_aspect_ratio": 3.0
+    },
+    "provenance": { "required": true }
+  },
+
+  "tiers": {
+    "A": {
+      "label": "key art",
+      "use": ["splash", "store icon", "promo", "cutscene"],
+      "min_side_px": 1024,
+      "max_side_px": 4096,
+      "overrides": {}
+    },
+    "B": {
+      "label": "gameplay",
+      "use": ["tower", "enemy", "tile"],
+      "min_side_px": 96,
+      "max_side_px": 512,
+      "overrides": { "colors": { "max_distinct_after_quantise": 256 } }
+    }
+  },
+
+  "unit_design_rules": [
+    "Skeletal cut-up is the weak point: a brush stroke that crosses a joint cannot be split without a visible break. Design silhouettes so every joint sits under an overlapping element.",
+    "A locked reference sheet is not optional here — it is the only thing holding the set together."
+  ]
+}

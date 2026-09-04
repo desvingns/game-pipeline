@@ -1,0 +1,25 @@
+---
+name: gates-report-truth
+description: The difference between a failing gate and a gate that could not run in {{PROJECT_NAME}}
+metadata:
+  type: project
+---
+
+Every gate script emits exactly one JSON line. Two shapes matter and they mean
+opposite things:
+
+- `{"pass":false, ...}` — the gate ran and the game did not satisfy it.
+- `{"pass":false,"error_kind":"godot_not_found", ...}` — the gate could not run.
+  Other kinds: `python_missing`, `harness_missing`, `not_style_locked`,
+  `profile_unknown`.
+
+**Why it matters:** treating the second as the first sends an agent off to fix a
+game that is not broken. Treating it as a pass ships something nobody checked.
+Both mistakes destroy the reason gates exist.
+
+**How to apply:** an `error_kind` stops the affected part of the run and is
+reported as an environment problem. Never approximate a gate that could not run,
+never claim a pass without the JSON line that shows it, and quote the line
+verbatim rather than paraphrasing it — the line names the specific rule, and the
+paraphrase loses it. See [[sim-render-split]] for the determinism gate this
+protects.

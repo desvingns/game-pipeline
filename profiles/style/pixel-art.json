@@ -1,0 +1,72 @@
+{
+  "id": "pixel-art",
+  "name": "Pixel art, locked palette",
+  "family": "raster, grid-native",
+  "reference_games": ["classic 16-bit era sprite work"],
+  "why": "The most machine-checkable style of all — the grid and the palette are exact, so the validator is decisive. The catch is generation: image models produce pixel-ish art with a drifting grid and anti-aliased edges, so a post-process pass (quantise + nearest-neighbour downscale to the native grid) is mandatory rather than optional.",
+
+  "prompt_skeleton": {
+    "style_medium": "pixel art sprite, {native_px} pixel native resolution, hard pixel edges, no anti-aliasing, limited palette of {palette_size} colours",
+    "lighting_mood": "single light source from {light_direction}, dithering only where declared",
+    "constraints": [
+      "transparent background",
+      "sprite aligned to the pixel grid",
+      "no sub-pixel detail, no blur",
+      "no text, no watermark"
+    ],
+    "avoid": ["anti-aliased edges", "gradients", "soft shadows", "high-resolution detail", "3D render look"]
+  },
+
+  "rules": {
+    "alpha": {
+      "required": true,
+      "background_must_be_transparent": true,
+      "max_semi_transparent_ratio": 0.02,
+      "max_opaque_area_ratio": 0.95
+    },
+    "colors": {
+      "max_distinct_after_quantise": 32,
+      "quantise_bits": 8,
+      "max_tones_per_object": 4,
+      "palette_mode": "locked",
+      "max_palette_distance": 8.0
+    },
+    "outline": {
+      "required": false,
+      "max_luminance": 110,
+      "min_edge_coverage": 0.0
+    },
+    "geometry": {
+      "size_multiple": 16,
+      "max_aspect_ratio": 3.0,
+      "pixel_grid": {
+        "required": true,
+        "native_px": 32,
+        "no_antialiasing": true
+      }
+    },
+    "provenance": { "required": true }
+  },
+
+  "tiers": {
+    "A": {
+      "label": "key art",
+      "use": ["splash", "store icon"],
+      "min_side_px": 256,
+      "max_side_px": 1024,
+      "overrides": { "colors": { "max_distinct_after_quantise": 64 } }
+    },
+    "B": {
+      "label": "gameplay",
+      "use": ["tower", "enemy", "projectile", "tile", "ui icon"],
+      "min_side_px": 16,
+      "max_side_px": 256,
+      "overrides": {}
+    }
+  },
+
+  "unit_design_rules": [
+    "Skeletal animation fights pixel art: rotating a sprite off the grid destroys the pixel discipline. Restrict skeletal motion to whole-pixel translation and 90-degree steps, or accept frame-by-frame for anything that rotates.",
+    "The locked palette is authoritative — every asset is quantised to it before review, not after."
+  ]
+}

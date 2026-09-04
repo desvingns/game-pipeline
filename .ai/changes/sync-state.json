@@ -1,0 +1,8 @@
+{
+  "state_version": 1,
+  "cursors": {
+    "codex-adapters": null,
+    "claude-plugin": null
+  },
+  "note": "A cursor is the id of the last agent-skill-log entry that adapter consumed. null means it has never run. Written by sync tooling only."
+}
