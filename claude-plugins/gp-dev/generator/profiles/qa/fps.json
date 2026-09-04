@@ -1,0 +1,16 @@
+{
+  "contract_version": 1,
+  "scenarios": {
+    "smoke": ["main_scene_loaded", "player_spawned", "hud_visible"],
+    "movement": ["grounded", "move", "jump", "blocked_by_wall", "no_fall_through"],
+    "combat": ["fire", "hit", "damage", "ammo_consumed", "cooldown"],
+    "enemies": ["acquire_player", "navigate", "attack", "death"],
+    "route": ["objective_reached", "no_softlock"],
+    "restart": ["death", "restart", "input_restored"],
+    "ui": ["mouse_capture", "pause_release", "settings_apply"],
+    "visual": ["camera_active", "assets_visible", "hud_readable"],
+    "perf": ["representative_combat", "camera_active"]
+  },
+  "performance": {"min_frames": 120, "min_fps": 55, "max_p95_frame_ms": 25},
+  "notes": "1280x720; 60 warmup frames. Agree hardware and limits before optimization. Headless runs cannot pass visual/perf gates. Qualitative review remains required."
+}

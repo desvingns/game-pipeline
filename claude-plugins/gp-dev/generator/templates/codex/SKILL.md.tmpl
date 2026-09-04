@@ -1,0 +1,40 @@
+---
+name: {{SKILL_NAME}}
+description: >-
+  Build or extend {{PROJECT_NAME}} through the {{PRESET}} game pipeline when the user invokes {{INVOCATION}}, /{{PREFIX}}, or asks to make this game or run its development workflow.
+---
+
+Read `{{AGENT_DIR}}/commands/{{PREFIX}}.md` from the game repository root, then load
+only the selected runbook and its declared contracts. Arguments following
+`{{INVOCATION}}` are the orchestrator's selectors and modifiers.
+
+Read `{{ROOT_DOC}}` and `{{MEMORY_PATH}}/MEMORY.md` when present. Memory is
+append-only. Resolve all runtime and role paths from the game repository root,
+even when the shell starts in a subdirectory. Never bootstrap inside the generator.
+
+When a runbook says to spawn a specialist, use its native `.codex/agents/*.toml`
+adapter if the harness supports named agents. Otherwise read the matching
+`.codex/agents/*.md` and pass its body and bounded task to `spawn_agent` (or the
+available collaboration tool). Inherit model settings. Wait for its structured
+result before dependent work. Parallelize only independent tasks with distinct
+write ownership. Reviewers and verifiers remain read-only and independent of
+the implementation. If delegation is unavailable, report that limitation before
+an implementation workflow requiring independent review; do not claim a self-review
+is independent. Read-only routing and gates can run without delegation.
+
+<!-- engine:2d -->
+For art, use the available native image generation tool after STYLE LOCK, then
+register its returned file using the art adapter. If native generation is absent,
+present the rendered prompt and wait for an externally produced image. A rendered
+prompt is not a generated image, and human STYLE LOCK approval is always required.
+<!-- /engine:2d -->
+<!-- engine:3d -->
+For 3D art, use the Blender recipe/spec workflow in contract-3d.md. Image tools
+may supply concept references and textures; record provenance with image-register.
+Inspect Blender previews and real Godot screenshots. STYLE LOCK requires human
+approval before production. A whole-game request selects --build and continues
+through staged board items until the approved brief is delivered.
+<!-- /engine:3d -->
+
+Shell scripts must be invoked with Bash, including on Windows. Check each gate's
+JSON `pass` value; exit code zero alone does not mean the gate passed.

@@ -1,0 +1,20 @@
+{
+  "name": "game-pipeline",
+  "interface": {
+    "displayName": "Game Pipeline"
+  },
+  "plugins": [
+    {
+      "name": "gp-dev",
+      "source": {
+        "source": "local",
+        "path": "./codex-plugins/gp-dev"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "id": "cel-shaded-outline",
+  "name": "Cel-shaded cartoon with heavy outline",
+  "family": "vector-look raster",
+  "reference_games": ["Kingdom Rush", "Iron Marines", "Clash-family mobile art"],
+  "why": "Flat fills plus a dark contour are the most reproducible style for generative art: the contour is a hard boundary a validator can measure, it hides the seam where skeletal parts overlap, and limited tonal steps keep separately generated assets in the same visual family.",
+
+  "prompt_skeleton": {
+    "style_medium": "2D game asset, cel-shaded cartoon illustration, bold dark outline, flat colour fills with {tones} tonal steps, no texture noise, no photographic detail",
+    "lighting_mood": "single light source from {light_direction}, soft ambient fill, no cast shadow on the asset itself",
+    "constraints": [
+      "transparent background",
+      "asset fills the canvas with a {margin_pct}% margin",
+      "silhouette readable in solid black",
+      "no ground plane, no scenery, no text, no watermark"
+    ],
+    "avoid": [
+      "gradients spanning more than two stops",
+      "photorealism, 3D render look, cinematic bloom",
+      "drop shadows baked into the sprite",
+      "cropped or touching the canvas edge"
+    ]
+  },
+
+  "rules": {
+    "alpha": {
+      "required": true,
+      "background_must_be_transparent": true,
+      "max_semi_transparent_ratio": 0.18,
+      "max_opaque_area_ratio": 0.92
+    },
+    "colors": {
+      "max_distinct_after_quantise": 24,
+      "quantise_bits": 5,
+      "max_tones_per_object": 4,
+      "palette_mode": "locked",
+      "max_palette_distance": 42.0
+    },
+    "outline": {
+      "required": true,
+      "max_luminance": 96,
+      "min_edge_coverage": 0.7,
+      "min_width_px": 2,
+      "max_width_px": 6,
+      "width_measured_at_px": 128
+    },
+    "geometry": {
+      "size_multiple": 8,
+      "max_aspect_ratio": 2.5
+    },
+    "provenance": {
+      "required": true
+    }
+  },
+
+  "tiers": {
+    "A": {
+      "label": "key art",
+      "use": ["splash", "store icon", "promo"],
+      "min_side_px": 1024,
+      "max_side_px": 2048,
+      "overrides": {
+        "colors": { "max_distinct_after_quantise": 96, "max_tones_per_object": 8 },
+        "outline": { "min_width_px": 3, "max_width_px": 14 }
+      }
+    },
+    "B": {
+      "label": "gameplay",
+      "use": ["tower", "enemy", "projectile", "tile", "ui icon"],
+      "min_side_px": 48,
+      "max_side_px": 512,
+      "overrides": {}
+    }
+  },
+
+  "unit_design_rules": [
+    "Joints are hidden by overlap — a pauldron covers the shoulder, a skirt covers the hip. This is what makes skeletal cut-up invisible in a style with a contour.",
+    "Parts are generated as parts under one declared light direction, never cut out of a finished whole.",
+    "Cloth, smoke, flags and auras are procedural (shader or particles), not skeletal parts."
+  ]
+}

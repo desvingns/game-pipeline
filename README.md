@@ -46,7 +46,28 @@ scripts — which breaks the review loop this pipeline depends on. Full rational
 
 ## Quick start
 
-For Codex, install the personal entry point once from this generator:
+### Marketplace plugin
+
+The recommended installation is the `game-pipeline` marketplace. It exposes
+`/gp` in Claude Code and `$gp-dev` in Codex, and bundles the generator for both
+2D Android and 3D Windows FPS projects:
+
+```bash
+# Claude Code
+claude plugin marketplace add D:/Pet/game-pipeline
+claude plugin install gp-dev@game-pipeline
+
+# Codex
+codex plugin marketplace add /d/Pet/game-pipeline
+codex plugin add gp-dev@game-pipeline
+```
+
+Use the GitHub URL instead of the local path when the repository is not on the
+same machine. Reopen the tool session after installation. The full guide is in
+[`docs/MARKETPLACE.md`](docs/MARKETPLACE.md).
+
+For Codex, the standalone personal entry point remains available when a
+marketplace cannot be registered:
 
 ```bash
 bash install-codex.sh
@@ -114,10 +135,12 @@ scenario failures so the agent can address the actual cause.
 
 ## Status
 
-v0.3.0 adds a selectively composed 3D FPS/Windows/Blender workflow, game-brief
+v0.4.0 adds the dual-harness `game-pipeline` marketplace plugin. v0.3.0 added
+a selectively composed 3D FPS/Windows/Blender workflow, game-brief
 orchestration, GLB/provenance validation, real Godot test hosts and Windows
 executable smoke. The default 2D/Android workflow remains available. See
-[3D-WINDOWS.md](docs/3D-WINDOWS.md) and [CHANGELOG.md](CHANGELOG.md).
+[3D-WINDOWS.md](docs/3D-WINDOWS.md), [MARKETPLACE.md](docs/MARKETPLACE.md) and
+[CHANGELOG.md](CHANGELOG.md).
 
 This is a generator: each game still needs actual gameplay, assets and tests.
 Technical checks do not establish visual taste or control feel. No paired model

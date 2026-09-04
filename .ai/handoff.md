@@ -55,3 +55,19 @@ Unassigned — follow-up game vertical slice and engine harness integration.
 - The generated integration scene is a test fixture, not a full FPS or network
   game. Follow-up real user game creation happens in a separate repository.
 - Existing v0.2 working changes were preserved; no commit/push performed.
+
+## Update — 2026-09-04: v0.4 dual-harness marketplace
+
+- Completed gp-006: one `gp-dev` marketplace plugin is generated for Claude
+  Code and Codex. Catalogs live at `.claude-plugin/marketplace.json` and
+  `.agents/plugins/marketplace.json`; package trees live under
+  `claude-plugins/gp-dev/` and `codex-plugins/gp-dev/`.
+- Added `lib/build-marketplace.sh`, archive-before-replace generation,
+  dimension-specific runtime fallbacks, bundled generator sources and
+  `gp-bootstrap.sh` wrappers.
+- Codex plugin validation and marketplace JSON checks pass. Claude validation
+  passes with expected non-fatal warnings for internal lazy runbook frontmatter.
+- User-facing installation instructions are in `docs/MARKETPLACE.md`; the
+  standalone `install-codex.sh` path remains as a fallback.
+- Next action: commit and push the v0.4 marketplace package after packaged
+  generator smoke checks.

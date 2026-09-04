@@ -1,0 +1,45 @@
+{
+  "id": "iso-2to1",
+  "name": "True isometric, 2:1 tiles",
+  "default": false,
+  "reference_games": ["classic isometric strategy and base-builders"],
+  "why": "Gives real depth and multi-level maps. The price is paid in art volume: a unit that can face eight ways needs eight drawings and eight animation sets, and every one of them must agree on the same projection angle. Choose it knowingly, not by default.",
+
+  "camera": {
+    "elevation_deg": 30,
+    "tile_shape": "rhombus",
+    "tile_ratio": "2:1"
+  },
+
+  "facings": {
+    "drawn": ["s", "se", "e", "ne"],
+    "mirrored": { "sw": "se", "w": "e", "nw": "ne" },
+    "note": "Four drawn facings plus horizontal mirrors give the full eight. Mirroring only works if the unit design is laterally symmetric — an asymmetric weapon or shoulder pad breaks it and forces all eight to be drawn."
+  },
+
+  "art_cost": {
+    "assets_per_animated_unit": 4,
+    "backlog_multiplier": 4.0,
+    "warning": "Each ART card for an animated unit expands into four. The planner must apply this multiplier when sizing the backlog, not discover it during production."
+  },
+
+  "render": {
+    "sorting": "y_sort with per-tile depth offset",
+    "shadow": "projected rhombus shadow",
+    "notes": "Godot: TileMapLayer in isometric mode; keep the sim on a square logical grid and convert on render."
+  },
+
+  "sim_contract": {
+    "coordinates": "logical grid cells; the renderer applies the isometric transform, the simulation never sees pixels",
+    "path_representation": "ordered list of cell centres"
+  },
+
+  "validator_additions": {
+    "iso_angle_check": {
+      "enabled": true,
+      "expected_tile_ratio": 2.0,
+      "tolerance": 0.08,
+      "note": "Ground-contact footprint of a unit sprite should match the 2:1 tile rhombus within tolerance."
+    }
+  }
+}

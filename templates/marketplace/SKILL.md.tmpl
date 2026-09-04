@@ -1,0 +1,57 @@
+---
+name: gp-dev
+description: Install or run game-pipeline for Godot 2D Android games or Blender-based 3D Windows shooters. Use for $gp-dev, /gp, or any request to build a game through this pipeline.
+---
+
+# Game Pipeline marketplace bridge
+
+Use this skill when the user asks to create, extend, test or review a Godot game
+through the Game Pipeline. The pipeline supports the `2d-android` and
+`3d-fps-windows` presets; the latter uses Blender for reproducible 3D assets and
+Godot for the Windows game and harness.
+
+## Resolve the generator
+
+1. If the current repository contains `bootstrap.sh` and `templates/common/`,
+   treat it as the generator only when the user explicitly asks to work on the
+   generator. Never bootstrap a game into that repository.
+2. For a new game, resolve the packaged `scripts/gp-bootstrap.sh` first. In the
+   Claude plugin its path is `${CLAUDE_PLUGIN_ROOT}/scripts/gp-bootstrap.sh`.
+   In Codex, use the same script from the installed `gp-dev` plugin directory.
+3. A standalone install may instead provide `generator-root.txt` beside this
+   skill; read it and use the recorded absolute generator path.
+4. `GP_GENERATOR_ROOT` is an explicit fallback. A missing generator is a
+   readiness problem; do not claim that bootstrap or a gate succeeded.
+
+## Install a project pipeline
+
+Read the generator's `docs/USAGE.md`. Preview first with `--dry-run`, then run
+the absolute `bootstrap.sh` path from the target game directory with
+`--tool=claude` or `--tool=codex`, the user's prefix and project name.
+
+- Infer `--preset=3d-fps-windows` for a Windows 3D shooter using Blender.
+- Use `--genre=arena|tactical|horde` when the brief supports it.
+- Use `--network=offline` unless actual multiplayer is requested; then choose
+  `coop` or `competitive`.
+- The default `2d-android` preset requires an Android package id. Windows does
+  not.
+- Use `--force` only for an explicitly requested upgrade; the generator archives
+  replaced files and preserves state, boards, style lock and memory.
+
+After bootstrap, verify the root instructions, project skill, runtime manifest,
+native role adapters and gate scripts. Read only the generated project's
+selected runbook and contracts. A missing Godot, Blender, game project, test
+addon, reference sheet or harness is reported as a readiness gap, never as a
+passing gate.
+
+## Run an existing project
+
+Read the generated `.gp-version`, root instructions and project memory. In
+Claude use `/gp`; in Codex use the generated `$<prefix>` skill for project work
+and `$gp-dev` for generator/bootstrap routing. Preserve all selectors and
+modifiers. Continue a whole-game request through `--build` until the approved
+brief is delivered.
+
+The production workflow is single-track: do not create a second baseline game,
+paired experiment or model benchmark. Existing non-pipeline builds may be
+compared manually by the user.

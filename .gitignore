@@ -6,4 +6,5 @@ __pycache__/
 /tmp/
 /out/
 /graphify-out/
+archive/marketplace/
 .env

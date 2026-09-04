@@ -1,0 +1,22 @@
+---
+name: sim-render-split
+description: Why {{PROJECT_NAME}} keeps game logic engine-free, and what breaks when it does not
+metadata:
+  type: project
+---
+
+Game logic in {{PROJECT_NAME}} lives in `sim/` and knows nothing about Godot:
+no `Node`, no scene tree, no `Input`, no `Time`, no unseeded RNG, no iteration
+over an unordered `Dictionary` where order affects the result. Classes there
+extend `RefCounted`.
+
+**Why:** it is what makes the replay gate possible. Same seed plus same tick
+count must produce the same state hash, and every one of the things listed above
+introduces a source of variation the seed does not control. It also means the
+whole simulation is testable headlessly, and that projection (top-down now,
+possibly isometric later) is a rendering decision rather than a rewrite.
+
+**How to apply:** if a change appears to need a `Node` inside `sim/`, that is the
+signal the design put logic in the wrong layer. Raise it rather than reaching for
+an exception — the first exception is the one that makes the gate meaningless,
+and after that nobody trusts it.

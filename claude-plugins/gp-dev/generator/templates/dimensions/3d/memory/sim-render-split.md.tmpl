@@ -1,0 +1,10 @@
+---
+name: sim-render-split
+description: FPS domain rules and engine physics have separate test contracts
+---
+
+domain/ is RefCounted-only, seeded, fixed-tick game rules. world/ owns Godot
+physics/navigation and scene lifecycle. input/ gives human and bot the same
+commands. render/ui observe state. Repeat exact hashes only for pure rules;
+use scenario assertions with documented tolerances for physics. Never claim a
+passing domain replay proves whole-game determinism. Read {{ROOT_DOC}} for paths.

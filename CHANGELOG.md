@@ -4,6 +4,25 @@ All notable changes to game-pipeline. SemVer: PATCH = wording, MINOR = additive
 (new agents, new profiles, new optional sections), MAJOR = renames or JSON-shape
 changes.
 
+## [0.4.0] — 2026-09-04
+
+### Added
+
+- A `game-pipeline` marketplace catalog for Claude Code and Codex with the
+  `gp-dev` plugin, following the dual-harness layout used by
+  `mobile-pipeline`.
+- Reproducible `lib/build-marketplace.sh` generation for both plugin trees,
+  dimension-specific runtime fallbacks, plugin manifests and a bundled
+  generator/bootstrap wrapper.
+- Marketplace installation documentation and regression checks for manifest
+  validity, runtime selection, placeholder rendering and generator parity.
+
+### Changed
+
+- The Game Pipeline front door is available as `/gp` in Claude Code and
+  `$gp-dev` in Codex. Generated game projects still select their own prefix and
+  dimension-specific roles after bootstrap.
+
 ## [0.3.0] — 2026-09-04
 
 ### Added

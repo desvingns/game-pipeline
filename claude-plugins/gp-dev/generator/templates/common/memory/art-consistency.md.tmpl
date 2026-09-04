@@ -1,0 +1,25 @@
+---
+name: art-consistency
+description: What actually holds AI-generated art together across hundreds of assets in {{PROJECT_NAME}}
+metadata:
+  type: project
+---
+
+Image models do not remember previous calls. Two assets generated from equally
+good prompts a week apart will not match. Three mechanisms, in order of how much
+they contribute, keep {{PROJECT_NAME}} looking like one game:
+
+1. **The frozen reference sheet.** Every generation is conditioned on the same
+   locked images. This does most of the work; a prompt-spec with an empty
+   `reference_images` list turns a conditioned generation into an independent
+   roll.
+2. **The style profile's machine rules.** Palette distance, colour count, contour
+   width, alpha hygiene. Blunt, but they reject the obviously-off before anyone
+   spends attention on it.
+3. **The prompt skeleton.** Wording that has been observed to hold the style,
+   reused verbatim rather than paraphrased.
+
+**How to apply:** never generate production art before STYLE LOCK, never leave
+`reference_images` empty, and when an asset comes back wrong, fix the prompt-spec
+rather than the pixels. Three attempts maximum — past that, the spec or the
+profile is wrong, and more attempts only cost money.

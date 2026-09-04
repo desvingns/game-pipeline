@@ -1,0 +1,35 @@
+{
+  "id": "top-down-34",
+  "name": "Three-quarter top-down",
+  "default": true,
+  "reference_games": ["Kingdom Rush", "most 2D mobile tower defense"],
+  "why": "The camera looks down at roughly 45-60 degrees, so a unit reads from a single drawn facing that is mirrored horizontally for the opposite direction. This is the cheapest projection per unit of visual quality, and it is the native habitat of the cel-shaded-outline style.",
+
+  "camera": {
+    "elevation_deg": 55,
+    "tile_shape": "square",
+    "tile_ratio": "1:1"
+  },
+
+  "facings": {
+    "drawn": ["south", "north"],
+    "mirrored": { "east": "west" },
+    "note": "Two drawn facings cover walking toward and away from the camera; east/west is one drawing plus a horizontal flip. Diagonals are approximated by the nearest facing."
+  },
+
+  "art_cost": {
+    "assets_per_animated_unit": 2,
+    "backlog_multiplier": 1.0
+  },
+
+  "render": {
+    "sorting": "y_sort",
+    "shadow": "blob shadow sprite under the unit",
+    "notes": "Godot: a single Y-sorted CanvasLayer with TileMapLayer beneath. Depth comes from draw order, not from the tile grid."
+  },
+
+  "sim_contract": {
+    "coordinates": "logical grid cells; the renderer maps cell -> pixel, the simulation never sees pixels",
+    "path_representation": "ordered list of cell centres"
+  }
+}

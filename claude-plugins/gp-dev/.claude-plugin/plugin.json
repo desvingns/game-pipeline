@@ -1,0 +1,29 @@
+{
+  "name": "gp-dev",
+  "version": "0.4.0",
+  "description": "Godot 2D Android and Blender-based 3D Windows FPS game pipeline.",
+  "author": {
+    "name": "Kirill Shavrin",
+    "email": "desvingns@gmail.com",
+    "url": "https://github.com/desvingns"
+  },
+  "homepage": "https://github.com/desvingns/game-pipeline",
+  "repository": "https://github.com/desvingns/game-pipeline",
+  "license": "MIT",
+  "keywords": ["games", "godot", "blender", "3d", "fps", "windows", "android", "pipeline"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Game Pipeline",
+    "shortDescription": "Build Godot 2D and 3D games with deterministic gates",
+    "longDescription": "Bootstrap and run a single AI-first game workflow for Godot 4: 2D Android games or Blender-based 3D Windows FPS games, with style lock, asset provenance, replay, QA, performance and export gates.",
+    "developerName": "Kirill Shavrin",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Write"],
+    "defaultPrompt": [
+      "Bootstrap a Godot 2D Android game through Game Pipeline",
+      "Build a Blender-based 3D Windows FPS",
+      "Run the selected Game Pipeline gates"
+    ],
+    "brandColor": "#0F766E"
+  }
+}

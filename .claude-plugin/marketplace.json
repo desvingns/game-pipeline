@@ -1,0 +1,20 @@
+{
+  "name": "game-pipeline",
+  "owner": {
+    "name": "Kirill Shavrin",
+    "email": "desvingns@gmail.com"
+  },
+  "metadata": {
+    "description": "Reusable Godot game pipeline for 2D Android and 3D Windows FPS projects. The gp-dev plugin bootstraps and routes one production workflow.",
+    "version": "0.4.0"
+  },
+  "plugins": [
+    {
+      "name": "gp-dev",
+      "source": "./claude-plugins/gp-dev",
+      "description": "Game Pipeline front door for Godot 2D Android and Blender-based 3D Windows FPS games: bootstrap, build, style lock, art provenance, deterministic gates and export.",
+      "category": "internal",
+      "tags": ["games", "godot", "blender", "3d", "fps", "windows", "android", "pipeline"]
+    }
+  ]
+}

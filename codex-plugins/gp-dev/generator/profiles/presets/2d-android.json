@@ -1,0 +1,6 @@
+{
+  "id": "2d-android", "dimension": "2d", "platform": "android",
+  "art_pipeline": "raster", "genre": "strategy", "genres": ["strategy"],
+  "network_modes": ["offline"], "style": "cel-shaded-outline",
+  "projection": "top-down-34", "export_preset": "Android", "export_extension": "apk"
+}

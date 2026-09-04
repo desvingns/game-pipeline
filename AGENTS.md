@@ -72,6 +72,7 @@ between them, never syntax. Design rationale: `docs/DESIGN.md`.
 
 ```
 bootstrap.sh              # entry point: parse args -> copy -> render -> strip -> rename -> memory -> stamp
+lib/build-marketplace.sh  # emits the Claude Code and Codex marketplace adapters
 lib/detect.sh             # OS / git / godot / python detection, path sanitising
 lib/prompts.sh            # interactive prompt helpers
 lib/render.sh             # placeholder replacement + conditional-block trimming (the render engine)
@@ -85,6 +86,10 @@ profiles/presets/         # supported dimension/platform/art combinations
 profiles/genres/          # arena, tactical, horde (only selected text is installed)
 profiles/network/         # offline, coop, competitive (only selected text is installed)
 profiles/qa/              # FPS behavioral checks and rendered performance limits
+.claude-plugin/           # Claude Code marketplace catalog
+.agents/plugins/          # Codex marketplace catalog
+claude-plugins/            # generated Claude Code plugin tree
+codex-plugins/             # generated Codex plugin tree
 templates/art/            # art subsystem: agents, generation adapters, validator, profiles
 docs/                     # DESIGN (rationale), USAGE, ARCHITECTURE, ART-PIPELINE
 .ai/                      # shared cross-tool workspace (memory / handoff / tasks / changes)

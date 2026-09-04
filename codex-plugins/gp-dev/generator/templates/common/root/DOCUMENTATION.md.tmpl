@@ -1,0 +1,26 @@
+# DOCUMENTATION — {{PROJECT_NAME}}
+
+Product history and decisions. Append-only: superseded content is marked
+superseded with a date, never deleted.
+
+## What this game is
+
+{{PROJECT_DESCRIPTION}}
+
+## History
+
+_No entries yet. `{{PREFIX}}-docs` appends one per completed SPEC._
+
+## Architecture decisions
+
+| # | Date | Decision | Why | Superseded |
+|---|---|---|---|---|
+| 1 | {{TODAY}} | Godot 4 + GDScript | The whole project is text, headless export needs no license activation, diffs stay reviewable | — |
+| 2 | {{TODAY}} | Simulation is engine-free and deterministic | Makes the replay gate possible; projection becomes a render concern | — |
+| 3 | {{TODAY}} | Style is a profile instantiation, not free-form prose | The asset gate is a function of the style; prose cannot be enforced | — |
+
+## Art decisions
+
+_Style profile, palette, light direction and their rationale land here after
+`/{{PREFIX}} --style`. Record regenerations too: an asset that took three
+attempts is telling you something about the prompt or the profile._

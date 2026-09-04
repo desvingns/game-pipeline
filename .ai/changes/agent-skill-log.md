@@ -118,3 +118,10 @@ Append-only. Format: `.ai/changes/README.md`.
 - change: bind exact artifacts and source inputs to mesh production provenance
 - why: model/provider claims and a successful exporter do not prove valid runtime assets
 - breaking: no (new mesh contracts; existing raster schemas remain unchanged)
+
+## 2026-09-04-marketplace
+- kind: plugin
+- target: lib/build-marketplace.sh, templates/marketplace/, claude-plugins/gp-dev/, codex-plugins/gp-dev/, .claude-plugin/marketplace.json, .agents/plugins/marketplace.json
+- change: Package one gp-dev marketplace plugin for Claude Code and Codex with generated runtime adapters and a bundled generator/bootstrap source.
+- why: Make Game Pipeline discoverable and installable from the Codex and Claude Code plugin marketplaces while preserving one canonical production workflow.
+- breaking: no (standalone install-codex.sh and generated project workflows remain available)

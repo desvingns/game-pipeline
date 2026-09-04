@@ -1,0 +1,6 @@
+{
+  "id": "perspective-fps", "dimension": "3d", "camera": "first-person perspective",
+  "units": "meters", "up_axis": "Y", "forward_axis": "-Z",
+  "asset_counting": "Count meshes, rigs, animation clips and material variants; no sprite-facing multiplier.",
+  "camera_requirements": ["configurable_fov", "mouse_capture", "sensitivity", "pause_releases_mouse", "viewmodel_clipping_review"]
+}

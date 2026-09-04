@@ -1,0 +1,14 @@
+{
+  "id": "stylized-3d", "dimension": "3d",
+  "description": "Readable stylized meshes with a locked material palette and measurable geometry limits.",
+  "units": "meters", "up_axis": "Y", "forward_axis": "-Z",
+  "budgets": {
+    "prop": {"triangles": 4000, "materials": 4, "bones": 0},
+    "kit": {"triangles": 6000, "materials": 4, "bones": 0},
+    "weapon": {"triangles": 16000, "materials": 6, "bones": 32},
+    "character": {"triangles": 24000, "materials": 8, "bones": 80}
+  },
+  "max_texture_size": 2048,
+  "machine_checks": ["glb_structure", "embedded_resources", "triangles", "materials", "bones", "texture_size", "bounds", "animations", "normals", "provenance", "style_lock"],
+  "review_checks": ["silhouette", "palette", "material_response", "rig_deformation", "collision_fit", "first_person_readability", "lighting", "animation_feel"]
+}

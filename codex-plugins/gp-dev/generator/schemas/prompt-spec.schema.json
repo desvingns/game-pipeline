@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gp/prompt-spec",
+  "title": "gp prompt-spec",
+  "description": "Provider-neutral description of one image to produce. The prompting agent writes this and knows nothing about which provider will consume it: the same document is rendered into a Gemini API call, into a Codex Desktop image_gen prompt, or into instructions a human pastes into a web tool. The field vocabulary follows the production-ready prompt structure used by Codex Desktop's image_gen so that rendering to that target is lossless.",
+  "type": "object",
+  "required": [
+    "spec_version", "id", "operation", "style_profile", "tier",
+    "use_case", "asset_type", "subject", "style_medium", "canvas", "constraints", "avoid"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": { "const": 1 },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "description": "Stable asset id, also the output filename stem. Example: tower_arrow_base."
+    },
+    "operation": {
+      "enum": ["generate", "edit"],
+      "description": "New generation, or an edit of an existing image named in source_image."
+    },
+    "source_image": {
+      "type": "string",
+      "description": "Required when operation is 'edit'. Repo-relative path."
+    },
+    "edit_goal": {
+      "type": "string",
+      "description": "Required when operation is 'edit'. What must change, and what must stay identical."
+    },
+
+    "style_profile": {
+      "type": "string",
+      "description": "Profile id from profiles/style/, e.g. cel-shaded-outline. Determines which rules the asset gate will apply."
+    },
+    "tier": { "enum": ["A", "B"], "description": "A = key art, B = gameplay. Never mix their prompts." },
+    "projection": { "type": "string", "description": "Profile id from profiles/projection/. Omit for UI and key art." },
+    "facing": { "type": "string", "description": "One of the drawn facings of the projection profile." },
+    "part": {
+      "type": "string",
+      "description": "For skeletal assets, which part this is (base, turret, barrel, torso, arm_l...). Parts of one unit MUST share light_direction and palette."
+    },
+
+    "use_case": { "type": "string", "description": "Where this asset is used in the game." },
+    "asset_type": {
+      "enum": ["tower", "enemy", "projectile", "tile", "prop", "ui_icon", "ui_panel", "vfx_sheet", "portrait", "key_art", "logo", "reference_sheet"]
+    },
+    "primary_request": { "type": "string", "description": "One sentence: the single thing this image must be." },
+    "subject": { "type": "string", "description": "The subject in concrete visual terms — shapes, materials, distinguishing features." },
+    "scene": { "type": "string", "description": "Backdrop. For gameplay assets this is normally 'none, transparent background'." },
+    "style_medium": { "type": "string", "description": "Rendered from the style profile's prompt_skeleton with this asset's parameters substituted." },
+    "composition": { "type": "string", "description": "Framing, orientation, margin, where the pivot/ground contact sits." },
+    "lighting": { "type": "string", "description": "Must restate the locked light direction. Parts of one unit that disagree here will not read as one object." },
+    "palette": {
+      "type": "object",
+      "description": "Colours this asset may use, drawn from the locked style bible palette.",
+      "properties": {
+        "locked_palette_ref": { "type": "string", "description": "Path to the palette file in the game repo, e.g. art/style/palette.json" },
+        "emphasis": { "type": "array", "items": { "type": "string" }, "description": "Hex values this asset should lead with." }
+      }
+    },
+    "text": { "type": "string", "description": "Literal text to render, or omit. Generative models render text badly — prefer to composite UI text in engine." },
+
+    "canvas": {
+      "type": "object",
+      "required": ["width", "height", "background"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 16 },
+        "height": { "type": "integer", "minimum": 16 },
+        "background": { "enum": ["transparent", "opaque"] },
+        "margin_pct": { "type": "number", "minimum": 0, "maximum": 40 }
+      }
+    },
+
+    "reference_images": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Repo-relative paths into the frozen art/style/ reference sheet. This is what holds a hundred separately generated assets in one style; a spec for a production asset with an empty list is a bug, not a shortcut."
+    },
+
+    "constraints": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "avoid": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+
+    "seed": { "type": "integer", "description": "Where the provider supports it. Recorded in provenance either way." },
+    "notes": { "type": "string" }
+  }
+}

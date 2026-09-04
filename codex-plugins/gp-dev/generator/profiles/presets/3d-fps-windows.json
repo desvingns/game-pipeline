@@ -1,0 +1,6 @@
+{
+  "id": "3d-fps-windows", "dimension": "3d", "platform": "windows",
+  "art_pipeline": "blender", "genre": "arena", "genres": ["arena", "tactical", "horde"],
+  "network_modes": ["offline", "coop", "competitive"], "style": "stylized-3d",
+  "projection": "perspective-fps", "export_preset": "Windows Desktop", "export_extension": "exe"
+}
