@@ -19,10 +19,8 @@ MANIFEST="art/style/reference-manifest.json"
 MODE=""
 
 emit() { printf '%s\n' "$1"; exit 0; }
-emit_error() {
-  printf '{"pass":false,"error_kind":"%s","errors":["%s"]}\n' "$1" "$2"
-  exit 0
-}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
+. "$SCRIPT_DIR/{{PREFIX}}-common.sh"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -54,7 +52,7 @@ while IFS= read -r f; do
   h=$(sha256 < "$f") || emit_error "hash_failed" "could not hash $f"
   rel="${f#./}"
   [ -n "$ENTRIES" ] && ENTRIES="$ENTRIES,"
-  ENTRIES="$ENTRIES{\"path\":\"$rel\",\"sha256\":\"$h\"}"
+  ENTRIES="$ENTRIES{\"path\":\"$(json_escape "$rel")\",\"sha256\":\"$h\"}"
   COUNT=$((COUNT + 1))
 done <<EOF
 $FILES
@@ -70,7 +68,7 @@ if [ "$MODE" = "lock" ]; then
     printf '{\n'
     printf '  "manifest_version": 1,\n'
     printf '  "locked_utc": "%s",\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    printf '  "sheet_dir": "%s",\n' "$SHEET_DIR"
+    printf '  "sheet_dir": "%s",\n' "$(json_escape "$SHEET_DIR")"
     printf '  "sheet_sha256": "%s",\n' "$SHEET_HASH"
     printf '  "files": [%s]\n' "$ENTRIES"
     printf '}\n'

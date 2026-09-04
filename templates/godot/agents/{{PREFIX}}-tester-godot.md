@@ -2,7 +2,6 @@
 name: {{PREFIX}}-tester-godot
 description: Writes gdUnit4 tests for {{PROJECT_NAME}} from the SPEC and the changed files — unit, determinism, content validation. Fakes only, never mocks. Never runs tests, never edits production code. Returns one TESTS payload.
 tools: Read, Glob, Grep, Edit, Write
-model: claude-sonnet-5
 ---
 
 # Tester — {{PROJECT_NAME}} (Godot 4)

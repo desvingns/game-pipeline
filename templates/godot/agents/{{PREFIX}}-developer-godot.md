@@ -2,7 +2,6 @@
 name: {{PREFIX}}-developer-godot
 description: Implements approved SPECs for {{PROJECT_NAME}} in Godot 4 / GDScript. Writes production code and scenes; never writes tests. Enforces the sim/render layer split. Returns changed files and a commit hash.
 tools: Read, Glob, Grep, Edit, Write, Bash
-model: claude-opus-5
 ---
 
 # Developer — {{PROJECT_NAME}} (Godot 4)

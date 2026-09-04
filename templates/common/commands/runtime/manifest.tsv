@@ -1,4 +1,5 @@
 # mode	selector	runbook
+build	--build	build.md
 discuss	--discuss	discuss.md
 style	--style	style.md
 design	--design	design.md

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# {{PREFIX}}-visual-godot.sh — capture headless screenshots for {{PROJECT_NAME}}.
+# {{PREFIX}}-visual-godot.sh — capture rendered screenshots for {{PROJECT_NAME}}.
 # Emits exactly one JSON line on stdout.
 #
 # Usage:
@@ -25,10 +25,8 @@ SCENE=""
 OUT=""
 ALL=0
 
-emit_error() {
-  printf '{"pass":false,"error_kind":"%s","errors":["%s"]}\n' "$1" "$2"
-  exit 0
-}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
+. "$SCRIPT_DIR/{{PREFIX}}-common.sh"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -42,22 +40,26 @@ done
 
 [ -f "$PROJECT_DIR/project.godot" ] || emit_error "project_missing" "no project.godot under $PROJECT_DIR"
 
-GODOT=""
-if [ -n "${GODOT_BIN:-}" ] && [ -x "${GODOT_BIN}" ]; then
-  GODOT="$GODOT_BIN"
-else
-  for c in godot4 godot; do
-    command -v "$c" >/dev/null 2>&1 && { GODOT=$(command -v "$c"); break; }
-  done
-fi
+GODOT=$(detect_gate_godot || true)
 [ -n "$GODOT" ] || emit_error "godot_not_found" "no Godot 4 executable found; set GODOT_BIN to pin one"
 [ -f "$PROJECT_DIR/${HARNESS#res://}" ] || emit_error "harness_missing" "no capture harness at $HARNESS"
 
 capture() {
   local scene="$1" out="$2"
+  out="${out//\\//}"
   mkdir -p "$(dirname "$out")"
-  "$GODOT" --headless --path "$PROJECT_DIR" "$HARNESS" -- \
-      --scene="$scene" --out="$(pwd)/$out" >/dev/null 2>&1
+  if [ -e "$out" ]; then
+    mkdir -p archive/gp-shots
+    previous=$(mktemp -d archive/gp-shots/run.XXXXXX)
+    mv "$out" "$previous/"
+  fi
+  case "$out" in /*|[A-Za-z]:/*) output_path="$out" ;; *) output_path="$(pwd)/$out" ;; esac
+  output_path=$(native_path "$output_path")
+  # --headless disables rendering in Godot; capture needs a real/virtual display.
+  MSYS2_ARG_CONV_EXCL='res://;--scene=res://' "$GODOT" \
+      --rendering-method "${GP_SHOT_RENDERER:-gl_compatibility}" --audio-driver Dummy \
+      --path "$PROJECT_DIR" "$HARNESS" -- \
+      --scene="$scene" --out="$output_path" >/dev/null 2>&1 || return 1
   [ -s "$out" ]
 }
 
@@ -67,15 +69,16 @@ COUNT=0
 
 add_result() {
   [ -n "$SHOTS" ] && SHOTS="$SHOTS,"
-  SHOTS="$SHOTS{\"scene\":\"$1\",\"out\":\"$2\",\"ok\":$3}"
+  SHOTS="$SHOTS{\"scene\":\"$(json_escape "$1")\",\"out\":\"$(json_escape "$2")\",\"ok\":$3}"
   COUNT=$((COUNT + 1))
   [ "$3" = "false" ] && FAILED="$FAILED $1"
 }
 
 if [ "$ALL" -eq 1 ]; then
   [ -f "$SHOT_LIST" ] || emit_error "shot_list_missing" "no shot list at $SHOT_LIST"
-  while IFS=$'\t' read -r s o; do
+  while IFS=$'\t' read -r s o || [ -n "$s" ]; do
     case "$s" in ''|'#'*) continue ;; esac
+    [ -n "$o" ] || emit_error "bad_usage" "shot list row has no output path"
     if capture "$s" "$o"; then add_result "$s" "$o" true; else add_result "$s" "$o" false; fi
   done < "$SHOT_LIST"
 else
@@ -84,9 +87,10 @@ else
   if capture "$SCENE" "$OUT"; then add_result "$SCENE" "$OUT" true; else add_result "$SCENE" "$OUT" false; fi
 fi
 
+[ "$COUNT" -gt 0 ] || emit_error "shot_list_empty" "no scenes to capture"
 if [ -n "$FAILED" ]; then
   printf '{"pass":false,"captured":%s,"shots":[%s],"errors":["no image produced for:%s"]}\n' \
-    "$COUNT" "$SHOTS" "$FAILED"
+    "$COUNT" "$SHOTS" "$(json_escape "$FAILED")"
 else
   printf '{"pass":true,"captured":%s,"shots":[%s]}\n' "$COUNT" "$SHOTS"
 fi

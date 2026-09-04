@@ -2,7 +2,6 @@
 name: {{PREFIX}}-economy
 description: Tunes the numbers for {{PROJECT_NAME}} — costs, damage, health, wave pressure, reward curves — against the balance gate. Edits content data only, never code. Returns one BALANCE payload.
 tools: Read, Glob, Grep, Edit, Write, Bash
-model: claude-sonnet-5
 ---
 
 # Economy Agent — {{PROJECT_NAME}}

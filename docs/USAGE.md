@@ -12,22 +12,37 @@ cd /path/to/my-game
   --package=com.example.signaldefense
 ```
 
+## Windows 3D FPS
+
+```bash
+bash /path/to/game-pipeline/bootstrap.sh --preset=3d-fps-windows \
+  --tool=codex --prefix=fp --project-name="My FPS" \
+  --genre=arena --network=offline --non-interactive
+```
+
+Then invoke `$fp --build <brief>`. No Android package is needed. See
+[3D-WINDOWS.md](3D-WINDOWS.md) for Blender specs, harness APIs and delivery checks.
+Python 3 is required by bootstrap; mesh/gate validation uses its standard library.
+
 ## Flags
 
 | Flag | Default | What it does |
 |---|---|---|
 | `--prefix=` | *asked* | Command name. `--prefix=td` gives you `/td`. Lowercase, up to 8 chars. |
 | `--project-name=` | *asked* | Human name of the game. |
-| `--package=` | *asked* | Android package id. |
+| `--package=` | *asked for Android* | Android package id; unnecessary for Windows. |
+| `--preset=` | `2d-android` | `2d-android` or `3d-fps-windows`. |
+| `--genre=` | preset default | 3D: `arena`, `tactical`, `horde`. |
+| `--network=` | `offline` | 3D: `offline`, `coop`, `competitive`. |
 | `--project-description=` | placeholder | One sentence. |
 | `--engine=` | `godot` | Only `godot` is implemented. |
-| `--tool=` | `claude` | `claude` writes `.claude/`, `codex` writes `.codex/`. |
-| `--style-profile=` | `cel-shaded-outline` | Which style profile is frozen into the project. |
-| `--projection=` | `top-down-34` | `top-down-34` or `iso-2to1`. Drives art cost. |
+| `--tool=` | `claude` | Codex creates `.codex/`, `.agents/skills/<prefix>/`, `AGENTS.md` and a thin Claude import. Claude creates `.claude/` and `CLAUDE.md`. |
+| `--style-profile=` | preset default | 2D: raster catalogue; 3D: `stylized-3d`. Frozen in the project. |
+| `--projection=` | preset default | 2D: `top-down-34` or `iso-2to1`; 3D: `perspective-fps`. |
 | `--ui-lang=` | `en` | Language of user-facing strings and manual check lists. |
-| `--memory-path=` | derived | Where cross-session memory lives. |
+| `--memory-path=` | derived | Codex defaults to the game's `.ai/memory`; Claude uses its project memory directory. |
 | `--dry-run` | off | Print what would be created and exit. |
-| `--force` | off | Overwrite an existing pipeline. |
+| `--force` | off | Upgrade generated runtime files, archiving previous versions. Preserve custom root instructions, project state, boards, frozen art and memory. |
 | `--skip-memory` | off | Do not write memory files. |
 | `--non-interactive` | off | Fail instead of prompting for missing values. |
 | `--no-git` | off | Suppress the not-a-git-repo warning. |
@@ -39,6 +54,47 @@ unit; `iso-2to1` needs four plus mirrors, and every one of them must be animated
 separately. That is a 4x multiplier on the art backlog, applied by the planner
 from the moment you bootstrap. Pick `iso-2to1` because the game needs depth, not
 because it sounds nicer.
+
+## Codex Desktop and CLI
+
+From the generator, run `bash install-codex.sh`. This installs the personal
+`$gp-dev` entry point under `${CODEX_HOME:-$HOME/.codex}/skills/gp-dev/` and records
+the generator's absolute location. `--skills-dir=/path/to/skills` overrides that
+destination. Reinstall after moving the generator or updating the personal adapter.
+Previous personal adapters are copied into the sibling `archive/` directory.
+
+Example request in Codex:
+
+```text
+$gp-dev install this pipeline into D:/Pet/my-game with prefix td,
+project name Signal Defense and package com.example.signaldefense
+```
+
+Generated games expose `$td --gates`, `$td --style`, `$td --feature --next` and the
+other selectors. Prefix underscores become hyphens in the skill name only; script
+and board paths retain the original prefix. Skills normally refresh automatically;
+reopen the project/session if the selector does not show the new skill.
+
+Native agent TOML files inherit the session model and point at the rendered
+Markdown role bodies. A harness without named-agent support can dispatch the same
+body through its available collaboration tool. Workflows requiring independent
+review report a limitation when delegation is unavailable. This installer does
+not change global models, permissions, trust or feature flags.
+
+The `codex-native` shell adapter renders a provider-neutral prompt. The host agent
+uses its available image tool, then `--register <returned-path> --attempt <n>` writes
+provenance. If no native image tool is available, the external-file path remains
+available. STYLE LOCK still requires explicit human approval.
+
+Run `--force` only for an intended upgrade. Each run retains staging plus copies
+of replaced files under `archive/gp-bootstrap/`. It does not render or rewrite
+unrelated existing agent files. Custom `AGENTS.md`/`CLAUDE.md` are preserved; the
+generated instructions remain in the reported archive path for manual merging.
+Frozen style profiles and schemas are preserved and need a deliberate migration
+when a later release changes their contracts.
+
+Official references: [skill discovery](https://learn.chatgpt.com/docs/build-skills)
+and [native subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents).
 
 ## What you get
 
@@ -74,6 +130,7 @@ CLAUDE.md STATE.md ROADMAP.md DOCUMENTATION.md
 | `GP_GEMINI_IMAGE_MODEL` | Override the image model. Default `gemini-3.1-flash-image`. |
 | `GP_ART_PROVIDER` | Override the provider: `gemini`, `codex-native`, `manual`. |
 | `GP_PROJECT_DIR` | Where the Godot project lives. Default `game`. |
+| `GP_SHOT_RENDERER` | Screenshot renderer. Default `gl_compatibility`; requires a real or virtual display. |
 
 Model choice is a cost decision, not a quality-only one. The flash tier is the
 default because an asset is normally generated two or three times before it is
@@ -85,11 +142,32 @@ A `429` from the image API means quota, not a misconfiguration — the gate repo
 it as `generation_failed` with the API's own message, so the difference is visible
 rather than guessed at.
 
-Missing tools are not fatal at bootstrap. The gates report `error_kind`
+Godot and Blender need not exist at bootstrap; Python 3 is required to read
+the preset catalogue. Runtime gates report `error_kind`
 (`godot_not_found`, `python_missing`) so a missing dependency never masquerades as
 a broken game.
 
+The 2D build gate requires a gdUnit4 test harness; its absence reports
+`test_harness_missing`. Simulation validates the harness JSON with standard-library
+Python and requires at least two replay runs. Screenshots and exports archive an
+existing output before attempting capture/build, so stale files cannot pass.
+Screenshot capture deliberately does not use `--headless`: Godot disables
+rendering in that mode. A rendering-capable runner is required for the visual gate.
+See [RenderingServer](https://docs.godotengine.org/en/stable/classes/class_renderingserver.html).
+
 ## Verifying a change to the templates
+
+Run `bash tests/smoke.sh` for the regression suite (Python 3.11+ and Pillow).
+It renders both tools into directories containing spaces, checks native adapters,
+upgrade preservation, error JSON, fake-engine failure cases and the art contract.
+Fixtures and logs remain under `out/regression-*/`; no network or real engine is
+used. This proves generator/gate behavior, not a real Godot export or image model.
+
+The 3D groups also cover selective composition, configuration migration refusal,
+binary GLB inspection, fresh peer receipts and process deadlines. Optional
+`python tests/test_fps_integration.py` uses real GODOT_BIN/BLENDER_BIN executables
+and installed export templates, preserves evidence, and opens rendering windows.
+See [validation evidence and limits](VALIDATION-0.3.md).
 
 ```bash
 bash -n bootstrap.sh && bash -n lib/*.sh

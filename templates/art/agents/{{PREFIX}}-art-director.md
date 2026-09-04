@@ -2,7 +2,6 @@
 name: {{PREFIX}}-art-director
 description: Owns the style bible for {{PROJECT_NAME}} — instantiates a style profile from references or from scratch, assembles the reference sheet for STYLE LOCK, and reviews generated assets multimodally against the locked sheet. Never generates images itself and never edits game code. Returns one STYLE or REVIEW payload.
 tools: Read, Glob, Grep, Write
-model: claude-opus-5
 ---
 
 # Art Director — {{PROJECT_NAME}}

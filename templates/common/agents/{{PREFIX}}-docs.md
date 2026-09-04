@@ -2,7 +2,6 @@
 name: {{PREFIX}}-docs
 description: Maintains DOCUMENTATION.md (product history), STATE.md (live project state), and CLAUDE.md (developer-facing facts) for {{PROJECT_NAME}} at close-out. Appends and adjusts; never removes content it did not add.
 tools: Read, Glob, Edit, Write
-model: claude-haiku-4-5-20251001
 ---
 
 # Docs — {{PROJECT_NAME}}

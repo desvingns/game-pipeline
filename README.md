@@ -1,6 +1,7 @@
 # game-pipeline (gp)
 
-A **generator** of AI-first development pipelines for 2D mobile games. It is not a
+A **generator** of AI-first development pipelines for 2D Android games and 3D
+Windows shooters using Godot 4 and Blender. It is not a
 game and not a game engine: `bootstrap.sh` renders a template tree into one game
 repository, producing specialist agents, an orchestrator command, deterministic
 gate scripts, and an art subsystem.
@@ -24,7 +25,7 @@ gp's answer is to make style machine-checkable:
   invents a style as prose, because prose cannot be enforced.
 - A **frozen reference sheet** behind a hard human gate (STYLE LOCK). Every
   generation is conditioned on it, so assets made weeks apart still match.
-- **Mandatory provenance** on every image. An asset nobody can regenerate is a
+- **Mandatory provenance** on every generated asset. An asset nobody can regenerate is a
   liability.
 - A **deterministic asset gate** that rejects the broken, so the expensive
   multimodal review only ever sees plausible candidates.
@@ -44,6 +45,36 @@ scripts — which breaks the review loop this pipeline depends on. Full rational
 [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Quick start
+
+For Codex, install the personal entry point once from this generator:
+
+```bash
+bash install-codex.sh
+```
+
+Then invoke `$gp-dev` in Codex to bootstrap or run a game pipeline. It needs a
+target game directory, prefix, project name and preset for a new installation.
+An Android package id is required only for 2d-android. For a Windows shooter:
+
+```text
+$gp-dev create a Godot 3D arena FPS with Blender in D:/Pet/my-fps,
+prefix fp, project name My FPS. Use the game-pipeline and complete the brief.
+```
+
+See [the 3D workflow](docs/3D-WINDOWS.md). To install the 2D preset from Bash:
+
+```bash
+cd /path/to/my-game
+bash /path/to/game-pipeline/bootstrap.sh --tool=codex \
+  --prefix=td --project-name="My TD" --package=com.example.td --non-interactive
+```
+
+Codex discovers `$td` through `.agents/skills/td/SKILL.md`, reads `AGENTS.md`,
+and uses `.codex/agents/*.toml` adapters backed by canonical Markdown roles.
+Try `$td --gates`, then `$td --style`. No global model or permission changes are
+required. See [the Codex setup](docs/USAGE.md#codex-desktop-and-cli).
+
+For Claude Code:
 
 ```bash
 cd /path/to/my-game
@@ -68,21 +99,26 @@ See [`docs/USAGE.md`](docs/USAGE.md) for every flag, and
 
 | Gate | Answers |
 |---|---|
-| build + tests | does it import, compile, and pass gdUnit4 |
-| determinism | same seed, same state hash, twice |
-| balance | is the win rate inside the corridor across many seeds |
-| assets | does this image obey its style profile, and can it be regenerated |
+| build + tests | import/compile plus gdUnit4 (2D) or nonempty domain suites (3D) |
+| determinism | repeat the pure simulation/domain state hash from a seed |
+| balance | 2D win-rate corridor; 3D combat/resource/route observations |
+| assets | raster rules (2D) or GLB geometry/rig/material/provenance checks (3D) |
 | style lock | has the reference sheet drifted since it was frozen |
-| screenshots | does the scene render headlessly |
-| export | does an APK come out |
+| FPS scenarios | production movement, combat, navigation, restart, UI and selected networking |
+| screenshots / performance | fresh rendered evidence and measured frame times; needs graphics |
+| export | Android APK or Windows package plus real executable smoke |
 
-Every one emits exactly one JSON line. `"error_kind"` means the environment is
-wrong, not the game — a distinction that decides whether an agent goes off to fix
-something that was never broken.
+Every gate emits exactly one JSON line. `pass` records the result; `error_kind`
+distinguishes missing dependencies, invalid contracts, process failures and
+scenario failures so the agent can address the actual cause.
 
 ## Status
 
-v0.1.0 — working skeleton. The generator, the render engine, the profile
-catalogue, the art subsystem and the gate scripts are real. Not yet built: audio,
-on-device performance gate, playtest agent, the `--bench` model-comparison mode,
-and Codex `.codex/` adapter emission. See [`CHANGELOG.md`](CHANGELOG.md).
+v0.3.0 adds a selectively composed 3D FPS/Windows/Blender workflow, game-brief
+orchestration, GLB/provenance validation, real Godot test hosts and Windows
+executable smoke. The default 2D/Android workflow remains available. See
+[3D-WINDOWS.md](docs/3D-WINDOWS.md) and [CHANGELOG.md](CHANGELOG.md).
+
+This is a generator: each game still needs actual gameplay, assets and tests.
+Technical checks do not establish visual taste or control feel. No paired model
+experiment or duplicate baseline game is required.

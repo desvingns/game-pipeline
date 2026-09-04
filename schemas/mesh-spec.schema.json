@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Blender mesh production spec v1",
+  "type": "object",
+  "required": ["spec_version", "id", "kind", "source", "creator", "seed", "size_m", "animations", "collision"],
+  "properties": {
+    "spec_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,63}$"},
+    "kind": {"enum": ["prop", "kit", "weapon", "character"]},
+    "source": {"type": "string"},
+    "dependencies": {"type": "array", "items": {"type": "string"}},
+    "creator": {"type": "object", "required": ["tool", "model"], "properties": {"tool": {"type": "string"}, "model": {"type": "string"}}},
+    "seed": {"type": "integer"},
+    "size_m": {"type": "object", "required": ["min", "max"], "properties": {
+      "min": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number", "minimum": 0}},
+      "max": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "number", "exclusiveMinimum": 0}}
+    }},
+    "animations": {"type": "array", "items": {"type": "string"}},
+    "collision": {"enum": ["none", "convex", "trimesh"]}
+  }
+}

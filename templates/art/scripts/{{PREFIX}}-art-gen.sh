@@ -34,10 +34,8 @@ fi
 PASSTHROUGH=()
 SPEC=""
 
-emit_error() {
-  printf '{"pass":false,"error_kind":"%s","errors":["%s"]}\n' "$1" "$2"
-  exit 0
-}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
+. "$SCRIPT_DIR/{{PREFIX}}-common.sh"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -58,18 +56,12 @@ case "$PROVIDER" in
   *) emit_error "bad_usage" "unknown provider: $PROVIDER" ;;
 esac
 
-PY=""
-if [ -n "${GP_PYTHON:-}" ] && "$GP_PYTHON" -c "import sys" >/dev/null 2>&1; then
-  PY="$GP_PYTHON"
-else
-  for c in python3 python py; do
-    if command -v "$c" >/dev/null 2>&1; then PY="$c"; break; fi
-  done
-fi
+PY=$(detect_gate_python || true)
 [ -n "$PY" ] || emit_error "python_missing" "no python interpreter found (set GP_PYTHON)"
 
 IMPL="$SCRIPT_DIR/{{PREFIX}}-art-gen.py"
 [ -f "$IMPL" ] || emit_error "impl_missing" "generator implementation not found at $IMPL"
+IMPL=$(native_path "$IMPL")
 
 OUT=$("$PY" "$IMPL" --provider "$PROVIDER" "${PASSTHROUGH[@]}" 2>/dev/null)
 [ -n "$OUT" ] || emit_error "generator_crashed" "the generator produced no output for $SPEC"

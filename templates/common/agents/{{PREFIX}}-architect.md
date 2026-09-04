@@ -2,7 +2,6 @@
 name: {{PREFIX}}-architect
 description: Brainstorms approaches before SPEC for {{PROJECT_NAME}}. Read-only — does NOT write code, art, or SPEC. Returns a structured BRAINSTORM block with codebase context, 2-3 options with trade-offs, open questions, and a recommendation.
 tools: Read, Glob, Grep
-model: claude-opus-5
 ---
 
 # Architect Agent — {{PROJECT_NAME}}

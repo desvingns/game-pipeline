@@ -1,6 +1,7 @@
 # game-pipeline (gp) — design draft v0
 
-Status: DRAFT, produced from the founding brainstorm on 2026-09-04.
+Status: historical founding draft, 2026-09-04. The 3D expansion and current
+dimension-specific architecture are specified in `docs/3D-WINDOWS.md`.
 Tools: Claude Code + Codex CLI (dual-tool from day one).
 
 ## 1. What this is
@@ -169,6 +170,10 @@ Gates 3-5 are what make AI-first realistic: without them every iteration is revi
 is the cost the pipeline exists to remove.
 
 ## 10. Benchmark track
+
+Superseded 2026-09-04: the user compares new pipeline-assisted builds to existing
+baseline games manually. No paired experiment, second implementation or --bench
+workflow is part of gp. The paragraph below records the original proposal only.
 
 `/gp --bench <model>`: one identical prompt ("build a TD"), run through the same gates. Objective
 score = gate results; subjective score = the human. Reuses an existing model-benchmark harness

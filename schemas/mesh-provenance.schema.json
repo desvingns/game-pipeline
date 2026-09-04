@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Blender production provenance v1", "type": "object",
+  "required": ["provenance_version", "pipeline", "asset_id", "created_utc", "creator", "blender", "spec_path", "spec_sha256", "source_hashes", "profile_sha256", "reference_sheet_sha256", "artifacts", "stats"],
+  "properties": {
+    "provenance_version": {"const": 1}, "pipeline": {"const": "blender-3d"},
+    "asset_id": {"type": "string"}, "created_utc": {"type": "string"},
+    "creator": {"type": "object", "required": ["tool", "model"]},
+    "blender": {"type": "string"}, "spec_path": {"type": "string"},
+    "spec_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "reference_sheet_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_hashes": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "artifacts": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "stats": {"type": "object"}
+  }
+}

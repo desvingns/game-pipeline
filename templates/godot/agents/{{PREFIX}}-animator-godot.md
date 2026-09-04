@@ -2,7 +2,6 @@
 name: {{PREFIX}}-animator-godot
 description: Builds skeletal rigs and AnimationPlayer tracks for {{PROJECT_NAME}} as text, plus procedural juice via tweens. Never generates art. Returns one ANIMATION payload.
 tools: Read, Glob, Grep, Edit, Write
-model: claude-sonnet-5
 ---
 
 # Animator — {{PROJECT_NAME}} (Godot 4)

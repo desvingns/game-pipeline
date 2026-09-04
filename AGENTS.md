@@ -7,8 +7,8 @@ these rules elsewhere.
 ## What this repo is
 
 `game-pipeline` (gp) is a **generator**, not a game. `bootstrap.sh` renders the `templates/` tree
-plus a user-chosen `PREFIX` into a ready-to-use agent pipeline for one **2D mobile game repository**
-(Godot 4 / Android): specialist agents, an orchestrator command, deterministic gate scripts, an art
+plus a user-chosen `PREFIX` into a ready-to-use agent pipeline for one **game repository**:
+2D/Android or 3D FPS/Windows (Godot 4; Blender for 3D). Specialist agents, an orchestrator, gate scripts, an art
 subsystem, and cross-session memory. The thing edited here is the *template system*.
 
 Sibling generator: [`claude-mobile-pipeline`](https://github.com/desvingns/mobile-pipeline) (cmp),
@@ -41,21 +41,32 @@ between them, never syntax. Design rationale: `docs/DESIGN.md`.
 
 ## Domain rules specific to games (do not soften)
 
-- **Simulation is engine-free and deterministic.** Game logic runs in logical coordinates, knows
+- **The architecture contract is selected by dimension.** In 2D, simulation remains engine-free
+  and deterministic. Game logic runs in logical coordinates, knows
   nothing about pixels, projection, or nodes, and replays identically from a seed. Rendering is a
-  separate layer. This is what makes the `sim` gate possible.
+  separate layer. In 3D, `domain/` contains the same pure seeded rules; `world/` owns Godot physics,
+  collision and navigation; human and bot input share production commands. The replay gate covers
+  pure rules only. Engine physics requires scenario assertions with agreed tolerances, not an
+  unsupported promise of bit-identical replay. Do not move physics into domain/ or weaken 2D rules.
 - **The asset gate is a function of the style.** Style is never free-form prose. gp ships a
   catalogue of **style profiles** under `profiles/style/` (prompt skeleton + machine rules); a game
   spec *instantiates* a profile, never invents one. Adding a new style means adding its validation
   rules too.
-- **Projection is a profile** (`profiles/projection/`) and it determines how many facings each art
-  card demands. The backlog planner reads it; it does not discover it later.
+- **Projection is a profile** (`profiles/projection/`). For 2D it determines facings and art-card
+  multipliers. For 3D it defines metric axes and camera requirements; count meshes, rigs and clips.
 - **Provenance is mandatory.** Every generated image carries a provenance record (prompt-spec hash,
   provider, model, params, timestamp, reference-sheet hash). Missing provenance fails the asset
   gate exactly like a broken alpha channel. When an image is produced inside an agent session
   rather than by a script, the *agent* writes the record.
 - **STYLE LOCK is a hard human gate.** No art card enters production before the reference sheet is
   approved and frozen.
+- **3D provenance binds exact bytes.** Preserve Blender recipes, declared dependencies, frozen
+  mesh specs, tool versions, profile/reference hashes and output digests in `art/builds/` plus a
+  sibling provenance record. Machine checks do not replace visual/animation/collision review.
+- **Selected context only.** Compose dimension/platform/art/genre/network modules at bootstrap;
+  do not burden generated games with unrelated instructions. Role models inherit the session.
+- **One production workflow.** `--build` completes one approved game brief. Do not add a mandatory
+  second baseline implementation, paired-run protocol or model benchmark system.
 
 ## Repository map
 
@@ -69,6 +80,11 @@ profiles/projection/*.json# projection profiles: facings, sorting, art-card mult
 schemas/*.schema.json     # prompt-spec and provenance contracts
 templates/common/         # engine-neutral: design agents, orchestrator, memory, root docs, spec board
 templates/godot/          # Godot 4 specialists + gate scripts + memory
+templates/dimensions/3d/  # FPS role/runtime overrides, Blender and actual Godot harness templates
+profiles/presets/         # supported dimension/platform/art combinations
+profiles/genres/          # arena, tactical, horde (only selected text is installed)
+profiles/network/         # offline, coop, competitive (only selected text is installed)
+profiles/qa/              # FPS behavioral checks and rendered performance limits
 templates/art/            # art subsystem: agents, generation adapters, validator, profiles
 docs/                     # DESIGN (rationale), USAGE, ARCHITECTURE, ART-PIPELINE
 .ai/                      # shared cross-tool workspace (memory / handoff / tasks / changes)
@@ -87,7 +103,7 @@ not by the agents:
 | Session | Provider | Mode |
 |---|---|---|
 | Claude Code | `gemini` (Nano Banana family) | scripted, `GEMINI_API_KEY` |
-| Codex Desktop | `codex-native` (`image_gen`) | human-in-the-loop: agent emits the prompt, the user runs it, the agent integrates the returned path |
+| Codex Desktop | `codex-native` (`image_gen`) | agent invokes the available native tool and registers the returned path; external-file fallback when unavailable |
 | any | `manual` | any web tool; the file is dropped into `assets/inbox/` |
 
 Every provider consumes the same provider-neutral `prompt-spec.json` and must produce the same
@@ -102,3 +118,5 @@ provenance record. Swapping a model touches one script.
 - **Smoke test:** bootstrap into a throwaway dir, then grep the output for leaked
   `<!-- engine:* -->`, `<!-- tool:* -->`, `<!-- if * -->` or `{{...}}` markers.
 - Style and projection profiles must stay valid JSON: `python -m json.tool <file>`.
+- `bash tests/smoke.sh` covers both tools/presets and invalid/stale evidence. Optional real-tool
+  integration uses `python tests/test_fps_integration.py` with GODOT_BIN and BLENDER_BIN.

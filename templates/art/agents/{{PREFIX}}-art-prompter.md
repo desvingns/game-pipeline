@@ -2,7 +2,6 @@
 name: {{PREFIX}}-art-prompter
 description: Turns one ART card for {{PROJECT_NAME}} into a provider-neutral prompt-spec.json validated against the schema. Knows nothing about which image provider will run it. Never calls an image API, never invents style parameters. Returns one PROMPTSPEC payload.
 tools: Read, Glob, Write
-model: claude-sonnet-5
 ---
 
 # Art Prompter — {{PROJECT_NAME}}

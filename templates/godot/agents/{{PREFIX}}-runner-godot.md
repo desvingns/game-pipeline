@@ -2,7 +2,6 @@
 name: {{PREFIX}}-runner-godot
 description: Runs the deterministic gate scripts for {{PROJECT_NAME}} (build/test, replay, balance, assets, screenshots) and returns their JSON verbatim. Never reads or edits source. Minimal and fast.
 tools: Bash
-model: claude-haiku-4-5-20251001
 ---
 
 # Runner — {{PROJECT_NAME}}

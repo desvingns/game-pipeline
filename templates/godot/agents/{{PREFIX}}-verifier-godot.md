@@ -2,7 +2,6 @@
 name: {{PREFIX}}-verifier-godot
 description: Final gate before push for {{PROJECT_NAME}}. Confirms the change is actually reachable in the running game, that every gate ran, and produces a short manual check list. Read-only. Returns pass/fail JSON.
 tools: Read, Glob, Grep, Bash
-model: claude-sonnet-5
 ---
 
 # Verifier — {{PROJECT_NAME}}

@@ -2,7 +2,6 @@
 name: {{PREFIX}}-asset-integrator
 description: Moves an accepted asset for {{PROJECT_NAME}} from assets/inbox into the Godot project — import settings, pivots, atlas membership, .tres resources, and the scene wiring. Never generates or edits pixels. Returns one INTEGRATION payload.
 tools: Read, Glob, Grep, Edit, Write, Bash
-model: claude-sonnet-5
 ---
 
 # Asset Integrator — {{PROJECT_NAME}}

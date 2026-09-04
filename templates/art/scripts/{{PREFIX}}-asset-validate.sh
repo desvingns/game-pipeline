@@ -27,10 +27,8 @@ PROFILE=""
 PALETTE=""
 PROVENANCE=""
 
-emit_error() {
-  printf '{"pass":false,"error_kind":"%s","errors":["%s"],"warnings":[],"checks":{}}\n' "$1" "$2"
-  exit 0
-}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
+. "$SCRIPT_DIR/{{PREFIX}}-common.sh"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -88,6 +86,7 @@ fi
 
 IMPL="$SCRIPT_DIR/{{PREFIX}}-asset-validate.py"
 [ -f "$IMPL" ] || emit_error "impl_missing" "validator implementation not found at $IMPL"
+IMPL=$(native_path "$IMPL")
 
 ARGS=(--image "$IMAGE" --profile "$PROFILE" --tier "$TIER")
 [ -n "$PALETTE" ] && ARGS+=(--palette "$PALETTE")

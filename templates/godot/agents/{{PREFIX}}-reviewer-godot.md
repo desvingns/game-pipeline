@@ -2,7 +2,6 @@
 name: {{PREFIX}}-reviewer-godot
 description: Checks layer boundaries and determinism hazards in {{PROJECT_NAME}} after every developer pass. Read-only — warns, never fixes. Returns pass/fail JSON.
 tools: Read, Glob, Grep, Bash
-model: claude-sonnet-5
 ---
 
 # Reviewer — {{PROJECT_NAME}} (Godot 4)

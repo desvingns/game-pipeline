@@ -29,11 +29,20 @@ that describes the wrong thing.
 ```
 
 The provider comes from the session (see `contract-art`). If the result is
-`action: human_in_the_loop`, present the rendered prompt to the user, wait for the
-file, then register it:
+`action: human_in_the_loop`, the script has rendered a prompt, not an image.
+<!-- tool:claude -->
+Present that prompt to the user, wait for the file, then register it.
+<!-- /tool:claude -->
+<!-- tool:codex -->
+When `provider: codex-native` and a native image-generation tool is available,
+invoke it with the rendered prompt, the returned reference images, and the edit
+source (for `operation: edit`). Inspect local references first when the tool
+requires it. Register the actual returned image path. If the tool is unavailable
+or `provider: manual`, present the prompt and wait for the user's file.
+<!-- /tool:codex -->
 
 ```
-{{AGENT_DIR}}/scripts/{{PREFIX}}-art-gen.sh --spec art/prompts/<id>.json --register <path>
+bash {{AGENT_DIR}}/scripts/{{PREFIX}}-art-gen.sh --spec art/prompts/<id>.json --register <path> --attempt <n>
 ```
 
 If generation is unavailable, stop. Never substitute a hand-made placeholder.

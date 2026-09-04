@@ -29,10 +29,8 @@ RUNS=2
 SEEDS=20
 WAVES=30
 
-emit_error() {
-  printf '{"pass":false,"error_kind":"%s","errors":["%s"]}\n' "$1" "$2"
-  exit 0
-}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
+. "$SCRIPT_DIR/{{PREFIX}}-common.sh"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -46,27 +44,42 @@ while [ "$#" -gt 0 ]; do
     *) emit_error "bad_usage" "unknown argument: $1" ;;
   esac
 done
+for value in "$RUNS" "$SEEDS" "$WAVES"; do
+  positive_integer "$value" || emit_error "bad_usage" "runs, seeds and waves must be positive integers"
+done
+[[ "$SEED" =~ ^(0|[1-9][0-9]{0,8})$ ]] || emit_error "bad_usage" "seed must be a nonnegative integer"
+[ "$MODE" != replay ] || [ "$RUNS" -ge 2 ] || emit_error "bad_usage" "replay requires at least two runs"
 [ -n "$MODE" ] || emit_error "bad_usage" "pass --replay or --balance"
 [ -f "$PROJECT_DIR/project.godot" ] || emit_error "project_missing" "no project.godot under $PROJECT_DIR"
 
-GODOT=""
-if [ -n "${GODOT_BIN:-}" ] && [ -x "${GODOT_BIN}" ]; then
-  GODOT="$GODOT_BIN"
-else
-  for c in godot4 godot; do
-    command -v "$c" >/dev/null 2>&1 && { GODOT=$(command -v "$c"); break; }
-  done
-fi
+GODOT=$(detect_gate_godot || true)
 [ -n "$GODOT" ] || emit_error "godot_not_found" "no Godot 4 executable found; set GODOT_BIN to pin one"
 
 HARNESS_FILE="$PROJECT_DIR/${HARNESS#res://}"
 [ -f "$HARNESS_FILE" ] || emit_error "harness_missing" "no simulation harness at $HARNESS (expected $HARNESS_FILE)"
+PY=$(detect_gate_python || true)
+[ -n "$PY" ] || emit_error "python_missing" "Python is needed to validate simulation JSON"
 
 run_once() {
   # The harness prints one JSON line; engine chatter goes to stderr and is
   # dropped. Taking the LAST json-looking line keeps stray prints harmless.
-  "$GODOT" --headless --path "$PROJECT_DIR" "$HARNESS" -- \
-      --seed="$1" --waves="$WAVES" 2>/dev/null | grep -o '{.*}' | tail -1
+  local raw
+  raw=$(MSYS2_ARG_CONV_EXCL='res://' "$GODOT" --headless --path "$PROJECT_DIR" "$HARNESS" -- \
+      --seed="$1" --waves="$WAVES" 2>/dev/null) || return 1
+  printf '%s\n' "$raw" | "$PY" -c '
+import json, re, sys
+try:
+    lines = [line for line in sys.stdin.read().splitlines() if line.lstrip().startswith("{")]
+    if len(lines) != 1: raise ValueError("expected one harness payload")
+    data = json.loads(lines[0])
+    if type(data.get("seed")) is not int or data["seed"] != int(sys.argv[1]): raise ValueError("seed")
+    if not isinstance(data.get("hash"), str) or not re.fullmatch(r"[a-zA-Z0-9_-]+", data["hash"]): raise ValueError("hash")
+    if type(data.get("waves_survived")) is not int or not 0 <= data["waves_survived"] <= int(sys.argv[2]): raise ValueError("waves")
+    if data.get("result") not in ("win", "loss"): raise ValueError("result")
+    print(json.dumps(data, separators=(",", ":")))
+except (ValueError, TypeError, KeyError):
+    sys.exit(1)
+' "$1" "$WAVES"
 }
 
 field() { printf '%s' "$1" | grep -o "\"$2\"[[:space:]]*:[[:space:]]*\"\?[^,\"}]*" | sed -e "s|.*:[[:space:]]*\"\?||"; }
@@ -76,10 +89,10 @@ if [ "$MODE" = "replay" ]; then
   HASHES=""
   i=1
   while [ "$i" -le "$RUNS" ]; do
-    LINE=$(run_once "$SEED")
+    LINE=$(run_once "$SEED") || emit_error "harness_failed" "simulation process failed on run $i"
     [ -n "$LINE" ] || emit_error "harness_silent" "run $i produced no JSON line"
     H=$(field "$LINE" hash)
-    [ -n "$H" ] || emit_error "harness_contract" "run $i did not report a hash"
+    [[ "$H" =~ ^[a-zA-Z0-9_-]+$ ]] || emit_error "harness_contract" "run $i did not report a valid hash"
     [ -n "$HASHES" ] && HASHES="$HASHES,"
     HASHES="$HASHES\"$H\""
     [ -z "$FIRST" ] && FIRST="$H"
@@ -100,12 +113,14 @@ TOTAL=0
 SUM_WAVES=0
 i=1
 while [ "$i" -le "$SEEDS" ]; do
-  LINE=$(run_once $((SEED + i)))
+  LINE=$(run_once $((SEED + i))) || emit_error "harness_failed" "simulation process failed on seed $i"
+  [ -n "$LINE" ] || emit_error "harness_silent" "seed $i produced no JSON line"
   if [ -n "$LINE" ]; then
     TOTAL=$((TOTAL + 1))
-    [ "$(field "$LINE" result)" = "win" ] && WINS=$((WINS + 1))
+    RESULT=$(field "$LINE" result)
+    case "$RESULT" in win) WINS=$((WINS + 1)) ;; loss) ;; *) emit_error "harness_contract" "seed $i has invalid result" ;; esac
     W=$(field "$LINE" waves_survived)
-    case "$W" in ''|*[!0-9]*) W=0 ;; esac
+    [[ "$W" =~ ^(0|[1-9][0-9]{0,8})$ ]] || emit_error "harness_contract" "seed $i has invalid waves_survived"
     SUM_WAVES=$((SUM_WAVES + W))
   fi
   i=$((i + 1))
@@ -116,6 +131,9 @@ RATE=$((WINS * 100 / TOTAL))
 AVG=$((SUM_WAVES / TOTAL))
 LO="${GP_WINRATE_MIN:-35}"
 HI="${GP_WINRATE_MAX:-75}"
+[[ "$LO" =~ ^[0-9]{1,3}$ && "$HI" =~ ^[0-9]{1,3}$ ]] || emit_error "bad_usage" "invalid win-rate corridor"
+LO=$((10#$LO)); HI=$((10#$HI))
+[ "$LO" -le "$HI" ] && [ "$HI" -le 100 ] || emit_error "bad_usage" "corridor must be within 0-100"
 PASS=true
 ERRORS=""
 if [ "$RATE" -lt "$LO" ] || [ "$RATE" -gt "$HI" ]; then

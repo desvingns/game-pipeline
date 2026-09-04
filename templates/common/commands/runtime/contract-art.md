@@ -22,7 +22,7 @@ being able to tell "we made a bad asset" from "we made a broken one".
 | Session | Default provider | Behaviour |
 |---|---|---|
 | Claude Code | `gemini` | scripted, needs `GEMINI_API_KEY` |
-| Codex Desktop | `codex-native` | script renders the prompt and stops; a human runs `image_gen` and returns the path; the agent then calls `--register` |
+| Codex Desktop | `codex-native` | script renders the prompt; the agent invokes the available native image tool and registers its returned path; external-file fallback when unavailable |
 | any | `manual` | same human-in-the-loop flow, any tool |
 
 Override with `GP_ART_PROVIDER`. The prompt-spec is identical in all three cases —

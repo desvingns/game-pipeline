@@ -20,6 +20,7 @@ import json
 import math
 import os
 import sys
+from gp_art_contract import check_provenance
 
 REQUIRED_PROVENANCE_KEYS = (
     "provenance_version", "asset_id", "prompt_spec_path", "prompt_spec_sha256",
@@ -197,6 +198,8 @@ def main():
 
     checks["opaque_ratio"] = round(opaque / total, 4)
     checks["semi_transparent_ratio"] = round(semi / total, 4)
+    if opaque + semi == 0:
+        errors.append("image is entirely transparent; no visible asset was produced")
 
     if alpha_rules.get("required") and transparent == 0:
         errors.append("no transparent pixels at all — the background was not removed")
@@ -237,7 +240,10 @@ def main():
         errors.append("%d distinct colours after %d-bit quantisation exceed %d — the fills are not flat"
                       % (distinct, bits, cap))
 
-    palette = load_palette(args.palette)
+    try:
+        palette = load_palette(args.palette)
+    except (ValueError, TypeError):
+        palette = None
     mode = color_rules.get("palette_mode", "advisory")
     if palette and mode != "off":
         opaque_total = sum(counts.values()) or 1
@@ -255,7 +261,7 @@ def main():
                    % (worst_color[0], worst_color[1], worst_color[2], worst, limit))
             (errors if mode == "locked" else warnings).append(msg)
     elif mode == "locked":
-        warnings.append("palette_mode is 'locked' but no palette file was supplied — palette check skipped")
+        errors.append("palette_mode is 'locked' but no valid palette file was supplied")
 
     # ---- outline --------------------------------------------------------
     outline_rules = rules.get("outline", {})
@@ -311,14 +317,9 @@ def main():
             try:
                 with open(prov_path, "r", encoding="utf-8") as fh:
                     prov = json.load(fh)
-                missing = [k for k in REQUIRED_PROVENANCE_KEYS if not prov.get(k)]
-                if missing:
-                    errors.append("provenance is missing required fields: %s" % ", ".join(missing))
-                elif prov.get("style_profile") != profile.get("id"):
-                    errors.append("provenance says style_profile=%s but this asset was validated against %s"
-                                  % (prov.get("style_profile"), profile.get("id")))
-            except (OSError, ValueError) as exc:
-                errors.append("provenance is not readable JSON: %s" % exc)
+                check_provenance(prov, profile.get("id"))
+            except (OSError, ValueError, KeyError, TypeError) as exc:
+                errors.append("invalid provenance: %s" % exc)
 
     with open(args.image, "rb") as fh:
         digest = hashlib.sha256(fh.read()).hexdigest()

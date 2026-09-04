@@ -105,11 +105,17 @@ strip_if_markers() {
 # Applies replace_placeholder for each `KEY=value` line in <vars_file>.
 render_file() {
     local file="$1" vars_file="$2"
-    local key value
+    local key value escaped tmp="${file}.tmp.$$"
+    local expressions=()
     while IFS='=' read -r key value; do
         case "$key" in
             ''|'#'*) continue ;;
         esac
-        replace_placeholder "$file" "$key" "$value"
+        escaped="${value//\\/\\\\}"
+        escaped="${escaped//&/\\&}"
+        escaped="${escaped//|/\\|}"
+        expressions+=(-e "s|{{${key}}}|${escaped}|g")
     done < "$vars_file"
+    [ "${#expressions[@]}" -gt 0 ] || return 0
+    sed "${expressions[@]}" "$file" > "$tmp" && mv "$tmp" "$file"
 }

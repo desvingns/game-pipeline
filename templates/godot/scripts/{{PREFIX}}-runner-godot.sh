@@ -24,10 +24,8 @@ SCOPE=""
 EXPORT_PRESET="${GP_EXPORT_PRESET:-Android}"
 LOG_DIR="${TMPDIR:-/tmp}/{{PREFIX}}-runner-$$"
 
-emit_error() {
-  printf '{"pass":false,"error_kind":"%s","errors":["%s"]}\n' "$1" "$2"
-  exit 0
-}
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)
+. "$SCRIPT_DIR/{{PREFIX}}-common.sh"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -41,27 +39,12 @@ done
 [ -f "$PROJECT_DIR/project.godot" ] || emit_error "project_missing" "no project.godot under $PROJECT_DIR"
 
 # ----- engine -------------------------------------------------------------
-GODOT=""
-if [ -n "${GODOT_BIN:-}" ] && [ -x "${GODOT_BIN}" ]; then
-  GODOT="$GODOT_BIN"
-else
-  for c in godot4 godot; do
-    if command -v "$c" >/dev/null 2>&1; then GODOT=$(command -v "$c"); break; fi
-  done
-  if [ -z "$GODOT" ]; then
-    for c in "/c/Program Files/Godot/"Godot_v4*_console.exe \
-             "${LOCALAPPDATA:-}/Programs/Godot/"Godot_v4*_console.exe \
-             /Applications/Godot.app/Contents/MacOS/Godot; do
-      [ -x "$c" ] && { GODOT="$c"; break; }
-    done
-  fi
-fi
+GODOT=$(detect_gate_godot || true)
 [ -n "$GODOT" ] || emit_error "godot_not_found" "no Godot 4 executable found; set GODOT_BIN to pin one"
 
 mkdir -p "$LOG_DIR"
-trap 'rm -rf "$LOG_DIR"' EXIT
+# Retain logs for diagnosis; never delete evidence.
 
-json_escape() { printf '%s' "$1" | sed -e 's|\\|\\\\|g' -e 's|"|\\"|g' | tr '\n' ' '; }
 
 # ----- import -------------------------------------------------------------
 # A cold checkout has no .godot/ cache; every later step needs it, and an import
@@ -80,7 +63,7 @@ GDUNIT="$PROJECT_DIR/addons/gdUnit4/runtest.sh"
 TEST_PATH="${SCOPE:-res://tests}"
 
 if [ -f "$GDUNIT" ]; then
-  if ( cd "$PROJECT_DIR" && GODOT_BIN="$GODOT" bash addons/gdUnit4/runtest.sh -a "$TEST_PATH" ) \
+  if ( cd "$PROJECT_DIR" && MSYS2_ARG_CONV_EXCL='res://' GODOT_BIN="$GODOT" bash addons/gdUnit4/runtest.sh -a "$TEST_PATH" ) \
        > "$LOG_DIR/tests.log" 2>&1; then
     TEST_PASS=1
   else
@@ -89,9 +72,7 @@ if [ -f "$GDUNIT" ]; then
   SUMMARY=$(grep -iE '[0-9]+ *(tests?|failed|passed)' "$LOG_DIR/tests.log" | tail -1)
   TESTS="${SUMMARY:-see log}"
 else
-  TESTS="skipped"
-  # Not an error yet: a project can legitimately predate its test addon. The
-  # verifier is the one that decides whether shipping without tests is allowed.
+  emit_error "test_harness_missing" "gdUnit4 is missing at $GDUNIT; tests did not run"
 fi
 
 # ----- export -------------------------------------------------------------
@@ -100,6 +81,11 @@ EXPORT_PASS=1
 if [ "$EXPORT" -eq 1 ]; then
   OUT_APK="${GP_APK_OUT:-build/{{PREFIX}}.apk}"
   mkdir -p "$(dirname "$OUT_APK")"
+  if [ -e "$OUT_APK" ]; then
+    mkdir -p archive/gp-exports
+    previous=$(mktemp -d archive/gp-exports/run.XXXXXX)
+    mv "$OUT_APK" "$previous/"
+  fi
   if "$GODOT" --headless --path "$PROJECT_DIR" --export-release "$EXPORT_PRESET" \
        "$(cd "$(dirname "$OUT_APK")" && pwd)/$(basename "$OUT_APK")" \
        > "$LOG_DIR/export.log" 2>&1 && [ -f "$OUT_APK" ]; then

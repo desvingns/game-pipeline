@@ -7,8 +7,8 @@ One SPEC per run. With `--next`, take the top SPEC from
 
 ## 1. SPEC
 
-If the user gave free text, synthesise a SPEC and **present it for approval**.
-This gate always waits.
+If the user gave free text, synthesise a SPEC. Existing approval of the brief
+covers implementation within its scope; ask only for unresolved material choices.
 
 ```
 SPEC: <id>

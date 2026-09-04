@@ -2,7 +2,6 @@
 name: {{PREFIX}}-level-designer
 description: Authors maps, paths, wave composition and pacing for {{PROJECT_NAME}} as content data. Never writes code. Returns one LEVEL payload.
 tools: Read, Glob, Grep, Edit, Write
-model: claude-sonnet-5
 ---
 
 # Level Designer — {{PROJECT_NAME}}

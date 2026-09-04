@@ -8,7 +8,7 @@ Three providers, one contract:
                 session where GEMINI_API_KEY is set.
   codex-native  Codex Desktop's built-in image_gen. It is interactive and not
                 scriptable, so this script stops after rendering the prompt and
-                returns it for a human to run. The agent then registers the
+                returns it for the host agent's native tool or an external tool. The agent registers the
                 returned file with --register.
   manual        any other tool. Same flow as codex-native.
 
@@ -25,6 +25,9 @@ import os
 import sys
 import urllib.error
 import urllib.request
+import shutil
+import tempfile
+from gp_art_contract import check_spec, verify_sheet, check_references
 
 # Verified against the live model list: the key exposes gemini-2.5-flash-image,
 # gemini-3.1-flash-image(-lite) and gemini-3-pro-image(-preview). The 3.1 flash
@@ -71,6 +74,8 @@ def render_prompt(spec):
     their own block.
     """
     parts = []
+    if spec.get("operation") == "edit":
+        parts.append("Edit the supplied source image. " + spec["edit_goal"])
     if spec.get("primary_request"):
         parts.append(spec["primary_request"])
     parts.append("Subject: %s" % spec["subject"])
@@ -117,6 +122,8 @@ def write_provenance(path, spec, spec_path, provider, model, params, sheet_hash,
         "operator": operator,
         "attempt": attempt,
     }
+    if model == "unknown":
+        record["notes"] = "The external provider/session did not expose a model identifier."
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(record, fh, indent=2)
         fh.write("\n")
@@ -141,7 +148,10 @@ def call_gemini(prompt, spec, api_key, model):
     the asset set drifts apart.
     """
     parts = [{"text": prompt}]
-    for ref in spec.get("reference_images", []):
+    references = list(spec.get("reference_images", []))
+    if spec.get("operation") == "edit" and spec["source_image"] not in references:
+        references.append(spec["source_image"])
+    for ref in references:
         if not os.path.isfile(ref):
             return None, "reference image not found: %s" % ref
         ext = os.path.splitext(ref)[1].lower()
@@ -181,7 +191,7 @@ def main():
     ap.add_argument("--provider", default="gemini", choices=["gemini", "codex-native", "manual"])
     ap.add_argument("--out-dir", default="assets/inbox")
     ap.add_argument("--sheet-manifest", default="art/style/reference-manifest.json")
-    ap.add_argument("--operator", default="claude-code")
+    ap.add_argument("--operator", default="")
     ap.add_argument("--attempt", type=int, default=1)
     ap.add_argument("--render-only", action="store_true",
                     help="Print the rendered prompt and stop, whatever the provider.")
@@ -195,9 +205,13 @@ def main():
     except (OSError, ValueError) as exc:
         fail("spec_unreadable", "cannot read prompt-spec: %s" % exc)
 
-    for key in ("id", "style_profile", "subject", "style_medium", "canvas", "constraints", "avoid"):
-        if key not in spec:
-            fail("spec_invalid", "prompt-spec is missing required field: %s" % key)
+    try:
+        check_spec(spec)
+        if args.attempt < 1:
+            raise ValueError("attempt must be at least one")
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        fail("spec_invalid", str(exc))
+    args.operator = args.operator or {"codex-native": "codex-desktop", "gemini": "claude-code", "manual": "human"}[args.provider]
 
     prompt = render_prompt(spec)
     sheet_hash = read_sheet_hash(args.sheet_manifest)
@@ -205,15 +219,30 @@ def main():
         fail("not_style_locked",
              "no locked reference sheet at %s — production assets may not be generated before STYLE LOCK"
              % args.sheet_manifest)
+    if spec.get("asset_type") != "reference_sheet":
+        try:
+            manifest = verify_sheet(args.sheet_manifest)
+            check_references(spec, manifest)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            fail("sheet_drift", str(exc))
 
     os.makedirs(args.out_dir, exist_ok=True)
     image_path = posix(os.path.join(args.out_dir, spec["id"] + ".png"))
     prov_path = posix(os.path.join(args.out_dir, spec["id"] + ".provenance.json"))
 
+    def archive_previous():
+        existing = [p for p in (image_path, prov_path) if os.path.isfile(p)]
+        if existing:
+            os.makedirs("archive/art-attempts", exist_ok=True)
+            backup = tempfile.mkdtemp(prefix=spec["id"] + "-", dir="archive/art-attempts")
+            for path in existing:
+                shutil.copy2(path, backup)
+
     # ---- registering an image produced outside this script -----------------
     if args.register:
         if not os.path.isfile(args.register):
             fail("register_missing", "no such file: %s" % args.register)
+        archive_previous()
         if os.path.abspath(args.register) != os.path.abspath(image_path):
             with open(args.register, "rb") as src, open(image_path, "wb") as dst:
                 dst.write(src.read())
@@ -233,7 +262,7 @@ def main():
             "provider": args.provider,
             "prompt_file": prompt_path,
             "expected_image": image_path,
-            "reference_images": spec.get("reference_images", []),
+            "reference_images": spec.get("reference_images", []) + ([spec["source_image"]] if spec.get("operation") == "edit" and spec["source_image"] not in spec.get("reference_images", []) else []),
             "next_step": ("Run this prompt in %s, save the result, then re-run this script with "
                           "--register <path> to write provenance and move it into place."
                           % ("Codex Desktop image_gen" if args.provider == "codex-native" else "your image tool")),
@@ -250,11 +279,11 @@ def main():
     if err:
         fail("generation_failed", err, {"model": model, "prompt_file": None})
 
+    archive_previous()
     with open(image_path, "wb") as fh:
         fh.write(data)
     params = {"model": model}
-    if spec.get("seed") is not None:
-        params["seed"] = spec["seed"]
+    # This request does not send a seed; never record it as an accepted parameter.
     write_provenance(prov_path, spec, args.spec, "gemini", model, params,
                      sheet_hash or "", args.operator, args.attempt)
     out({"pass": True, "action": "generated", "provider": "gemini", "model": model,

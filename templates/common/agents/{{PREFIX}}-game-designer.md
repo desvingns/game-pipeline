@@ -2,7 +2,6 @@
 name: {{PREFIX}}-game-designer
 description: Designs mechanics, the core loop, and feel for {{PROJECT_NAME}} from an approved concept. Writes design documents and content data only — never GDScript, never scenes. Returns one DESIGN payload.
 tools: Read, Glob, Grep, Write
-model: claude-opus-5
 ---
 
 # Game Designer — {{PROJECT_NAME}}
