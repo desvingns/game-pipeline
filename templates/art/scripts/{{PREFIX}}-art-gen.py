@@ -26,7 +26,12 @@ import sys
 import urllib.error
 import urllib.request
 
-DEFAULT_GEMINI_MODEL = os.environ.get("GP_GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
+# Verified against the live model list: the key exposes gemini-2.5-flash-image,
+# gemini-3.1-flash-image(-lite) and gemini-3-pro-image(-preview). The 3.1 flash
+# tier is the default — current generation, and cheap enough to iterate on an
+# asset three times. Switch to gemini-3-pro-image via GP_GEMINI_IMAGE_MODEL for
+# tier-A key art, where consistency matters more than cost per call.
+DEFAULT_GEMINI_MODEL = os.environ.get("GP_GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 

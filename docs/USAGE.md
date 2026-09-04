@@ -71,8 +71,19 @@ CLAUDE.md STATE.md ROADMAP.md DOCUMENTATION.md
 | `GODOT_BIN` | Pin the Godot executable. Prefer a console/headless build on Windows. |
 | `GP_PYTHON` | Pin the interpreter used for image analysis. It must have Pillow. |
 | `GEMINI_API_KEY` | Enables scripted image generation in a Claude session. |
+| `GP_GEMINI_IMAGE_MODEL` | Override the image model. Default `gemini-3.1-flash-image`. |
 | `GP_ART_PROVIDER` | Override the provider: `gemini`, `codex-native`, `manual`. |
 | `GP_PROJECT_DIR` | Where the Godot project lives. Default `game`. |
+
+Model choice is a cost decision, not a quality-only one. The flash tier is the
+default because an asset is normally generated two or three times before it is
+accepted, and paying pro-tier prices for attempt one is waste. Switch to
+`gemini-3-pro-image` for tier-A key art, where a handful of assets carry the
+whole visual identity.
+
+A `429` from the image API means quota, not a misconfiguration — the gate reports
+it as `generation_failed` with the API's own message, so the difference is visible
+rather than guessed at.
 
 Missing tools are not fatal at bootstrap. The gates report `error_kind`
 (`godot_not_found`, `python_missing`) so a missing dependency never masquerades as

@@ -36,8 +36,10 @@ _Updated: 2026-09-04 — Claude Code._
 2. Godot harness scenes the gates expect: `res://tools/gates/sim_harness.tscn`
    and `res://tools/gates/shot.tscn`. Until they exist, `sim` and `visual` gates
    correctly report `harness_missing`.
-3. Verify the Gemini image model id in `art-gen.py` against the live API; the
-   default is a guess and should be pinned once observed working.
+3. Run one real Gemini generation once daily quota allows. The endpoint, auth,
+   request shape and model id are verified (a 429 rather than a 404 proves the
+   call is well-formed), but no image has actually come back yet, so the response
+   parsing path is still untested.
 4. `.codex/` adapter emission, so `--tool=codex` produces more than a directory
    name.
 
