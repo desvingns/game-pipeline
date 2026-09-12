@@ -67,3 +67,8 @@ FOLLOW_UPS: <ideas deliberately left out of this diff, or "none">
 COMMIT: <hash, or "not committed">
 === END IMPLEMENTATION ===
 ```
+
+Directory names in the default layer examples are mapped through
+pipeline/project.json for existing projects. Keep the engine-free deterministic
+logical domain contract intact regardless of its directory name. Preserve the
+project's explicit use-case, repository, mapper and composition boundaries.

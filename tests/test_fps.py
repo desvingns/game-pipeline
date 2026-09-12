@@ -94,13 +94,13 @@ class FPSTests(unittest.TestCase):
                 self.assertNotRegex(text, r"\{\{[^}]+\}\}|<!-- (?:engine:|tool:|if )")
                 if file.suffix == ".py":
                     py_compile.compile(str(file), doraise=True)
-            self.assertEqual(len(list((root / "agents").glob("*.md"))), 14)
+            self.assertEqual(len(list((root / "agents").glob("*.md"))), 15)
             for file in (root / "agents").glob("*.md"):
                 self.assertNotIn("model:", file.read_text())
                 self.assertNotIn("Skeleton2D", file.read_text())
             self.assertFalse((root / "scripts/fp-art-gen.sh").exists())
             for file in (root / "agents").glob("*.toml"):
-                self.assertNotIn("model", tomllib.loads(file.read_text()))
+                self.assertIn(tomllib.loads(file.read_text())["model"], {"gpt-5.6-luna", "gpt-5.6-sol", "gpt-6-astra"})
             manifest = (root / "commands/fp-runtime/manifest.tsv").read_text()
             self.assertIn("build\t--build\tbuild.md", manifest)
         contract = json.loads((self.projects["claude"] / "pipeline/qa-contract.json").read_text())

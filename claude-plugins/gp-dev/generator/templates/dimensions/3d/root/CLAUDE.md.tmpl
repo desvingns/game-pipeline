@@ -10,7 +10,7 @@ Godot 4 / typed GDScript, 3D FPS, Windows desktop, Blender/Python/GLB.
 Preset: {{PRESET}}. Genre: {{GENRE}}. Network: {{NETWORK}}. UI: {{UI_LANGUAGE}}.
 Frozen selection: pipeline/profile.json. Read only the selected genre.md and
 network.md under {{AGENT_DIR}}/commands/{{PREFIX}}-runtime/ when they are relevant.
-All specialist roles inherit the session model; never silently substitute models.
+Specialists follow pipeline/model-policy.json: Codex tiers are explicit; Claude chooses its own native models. Never silently substitute a requested model.
 
 ## Architecture
 
@@ -76,5 +76,5 @@ wrapper scenes and verify actual collision, animation and material behavior.
 Blockouts are allowed to test gameplay; they do not satisfy final art requirements.
 
 Keep STATE.md current; append decisions/history to DOCUMENTATION.md. Code board:
-{{AGENT_DIR}}/specs/. Art board: art/cards/. Memory at {{MEMORY_PATH}} is append-only.
+SPECS/. Art board: art/cards/. Memory at {{MEMORY_PATH}} is append-only.
 Never delete files; archive superseded work. No paired model experiment protocol.

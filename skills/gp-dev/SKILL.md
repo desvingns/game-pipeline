@@ -39,6 +39,23 @@ game's feature/design runbook to the generator repository.
 
 For a whole-game request, bootstrap if needed and continue with the project's
 --build workflow; installation alone does not satisfy a request to make a game.
-Honor existing scope approval, preserve the human STYLE LOCK gate, and inherit
-the session model for all roles. Do not create a second baseline game or require
+Honor existing scope approval, preserve the human STYLE LOCK gate, and use the project model policy for each bounded assignment. Do not create a second baseline game or require
 a paired experiment. Existing builds can be compared manually by the user.
+
+## Shared backlog execution and existing projects
+
+For an existing game use bootstrap --adopt (preview with --dry-run), preserving
+its source, architecture, tests, documents and custom configurations. Read the
+project's contract-work.md and pipeline/project.json. All projects and both tools
+use SPECS/. If absent, dispatch the backlog-discovery specialist before creating
+it: Codex gpt-5.6-luna / xhigh; Claude Code selects its native simple-task model.
+Migrate actual tasks with their text, IDs, evidence and links; report an empty
+backlog explicitly. Never fabricate tasks or silently create a competing board.
+
+Use --feature --next, --spec ID, --track NAME, --preview, --resume RUN, --status,
+--doctor and --metrics as applicable. One task per run unless explicitly authorized
+otherwise. Delegate bounded tasks using pipeline/model-policy.json: Codex Luna xhigh,
+Sol xhigh, Astra high by difficulty; Claude models are independently selected and
+can be updated in claude.tiers. Keep the primary chat model unchanged; recommended
+Codex orchestrator is Sol high. Use the shared script for claims, ownership,
+checkpoints, actual gate evidence and close-out. See docs/WORKFLOW.md in the generator.

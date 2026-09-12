@@ -125,3 +125,262 @@ Append-only. Format: `.ai/changes/README.md`.
 - change: Package one gp-dev marketplace plugin for Claude Code and Codex with generated runtime adapters and a bundled generator/bootstrap source.
 - why: Make Game Pipeline discoverable and installable from the Codex and Claude Code plugin marketplaces while preserving one canonical production workflow.
 - breaking: no (standalone install-codex.sh and generated project workflows remain available)
+
+## 2026-09-12-gp007-001
+- kind: script
+- target: bootstrap.sh
+- change: Implement and validate portable adoption, dispatch, execution or packaging behavior.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-002
+- kind: script
+- target: lib/build-marketplace.sh
+- change: Implement and validate portable adoption, dispatch, execution or packaging behavior.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-003
+- kind: script
+- target: lib/check-parity.py
+- change: Implement and validate portable adoption, dispatch, execution or packaging behavior.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-004
+- kind: script
+- target: lib/codex.sh
+- change: Implement and validate portable adoption, dispatch, execution or packaging behavior.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-005
+- kind: schema
+- target: schemas/work-assignment.schema.json
+- change: Define and validate the versioned shared execution payload.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-006
+- kind: schema
+- target: schemas/work-evidence.schema.json
+- change: Define and validate the versioned shared execution payload.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-007
+- kind: schema
+- target: schemas/work-migration.schema.json
+- change: Define and validate the versioned shared execution payload.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-008
+- kind: schema
+- target: schemas/work-model-policy.schema.json
+- change: Define and validate the versioned shared execution payload.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-009
+- kind: schema
+- target: schemas/work-project.schema.json
+- change: Define and validate the versioned shared execution payload.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-010
+- kind: schema
+- target: schemas/work-result.schema.json
+- change: Define and validate the versioned shared execution payload.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-011
+- kind: schema
+- target: schemas/work-run.schema.json
+- change: Define and validate the versioned shared execution payload.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-012
+- kind: doc
+- target: skills/gp-dev/SKILL.md
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-013
+- kind: doc
+- target: templates/codex/SKILL.md.tmpl
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-014
+- kind: agent
+- target: templates/common/agents/{{PREFIX}}-backlog-discovery.md
+- change: Apply shared SPECS and native model policy while preserving game contracts.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-015
+- kind: runbook
+- target: templates/common/commands/runtime/animate.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-016
+- kind: runbook
+- target: templates/common/commands/runtime/art.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-017
+- kind: runbook
+- target: templates/common/commands/runtime/build.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-018
+- kind: runbook
+- target: templates/common/commands/runtime/contract-startup.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-019
+- kind: runbook
+- target: templates/common/commands/runtime/contract-work.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-020
+- kind: runbook
+- target: templates/common/commands/runtime/feature.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-021
+- kind: runbook
+- target: templates/common/commands/runtime/manifest.tsv
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-022
+- kind: runbook
+- target: templates/common/commands/runtime/work.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-023
+- kind: runbook
+- target: templates/common/commands/{{PREFIX}}.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-024
+- kind: doc
+- target: templates/common/pipeline/model-policy.json
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-025
+- kind: doc
+- target: templates/common/root/CLAUDE.md.tmpl
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-026
+- kind: script
+- target: templates/common/scripts/gp_work.py
+- change: Implement and validate portable adoption, dispatch, execution or packaging behavior.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-027
+- kind: script
+- target: templates/common/scripts/{{PREFIX}}-work.sh
+- change: Implement and validate portable adoption, dispatch, execution or packaging behavior.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-028
+- kind: doc
+- target: templates/common/specs/README.md
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-029
+- kind: doc
+- target: templates/dimensions/3d/root/CLAUDE.md.tmpl
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-030
+- kind: doc
+- target: templates/dimensions/3d/root/DOCUMENTATION.md.tmpl
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-031
+- kind: runbook
+- target: templates/dimensions/3d/runtime/animate.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-032
+- kind: runbook
+- target: templates/dimensions/3d/runtime/art.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-033
+- kind: runbook
+- target: templates/dimensions/3d/runtime/feature.md
+- change: Route the shared backlog workflow through bounded native assignments and verified evidence.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-034
+- kind: script
+- target: templates/dimensions/3d/scripts/gp_mesh.py
+- change: Implement and validate portable adoption, dispatch, execution or packaging behavior.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-035
+- kind: agent
+- target: templates/godot/agents/{{PREFIX}}-developer-godot.md
+- change: Apply shared SPECS and native model policy while preserving game contracts.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-036
+- kind: doc
+- target: templates/marketplace/SKILL.md.tmpl
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp007-037
+- kind: doc
+- target: templates/marketplace/gp.md.tmpl
+- change: Document the shared SPECS workflow and independent tool policies.
+- why: Deliver the approved universal backlog and model-budget workflow.
+- breaking: yes (legacy code boards migrate to SPECS through discovery)

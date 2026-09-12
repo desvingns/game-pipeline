@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GP project",
+  "type": "object",
+  "required": [
+    "version",
+    "board",
+    "project_dir",
+    "architecture",
+    "repositories",
+    "gates"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "board": {
+      "type": "string",
+      "enum": [
+        "SPECS"
+      ]
+    },
+    "project_dir": {
+      "type": "string"
+    },
+    "architecture": {
+      "type": "object"
+    },
+    "repositories": {
+      "type": "object"
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "command"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

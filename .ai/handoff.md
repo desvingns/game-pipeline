@@ -71,3 +71,22 @@ Unassigned — follow-up game vertical slice and engine harness integration.
   standalone `install-codex.sh` path remains as a fallback.
 - Next action: commit and push the v0.4 marketplace package after packaged
   generator smoke checks.
+
+## Update — 2026-09-12: v1.0 shared backlog execution
+
+- Completed gp-007 and the 60 approved improvements; implementation map is in
+  docs/WORKFLOW.md. SPECS is shared by all projects and tools. Codex assignments
+  route Luna xhigh / Sol xhigh / Astra high; recommended coordinator is Sol high.
+- Claude owns its native model selection through the independent `claude` policy.
+  Current model names are intentionally left for Claude to configure. No CLI bridge.
+- Added portable workflow kernel, schemas, safe adoption/migration, claims,
+  bounded context/ownership, recovery, evidence, fresh reviews, usage and previews.
+- All 50 smoke tests and 18 real Godot/Blender integration checks pass; real Luna
+  discovery passed. Package parity checks 290 files. See docs/VALIDATION-1.0.md.
+- Both personal plugins are installed at 1.0.0, with prior installs archived.
+  Claude requires restart; use a fresh Codex session to ensure refreshed guidance.
+- Ground Truth was inspected read-only; no H12 implementation or runtime deployment
+  occurred there. Existing games adopt/upgrade the generated runtime when requested.
+- Final independent reviewer follow-up hit the host usage limit; previous findings
+  were fixed. Live full-feature multi-agent, Claude dispatch, Android and image
+  provider validation remain separate integration work, not claimed by fixtures.

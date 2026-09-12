@@ -1,87 +1,35 @@
-<!-- gp-runtime-contracts: startup -->
+<!-- gp-runtime-contracts: startup, work -->
 
-# `--feature` — from SPEC to shipped
+# --feature — one shared SPEC to a verified result
 
-One SPEC per run. With `--next`, take the top SPEC from
-`{{AGENT_DIR}}/specs/backlog/`.
+1. Orient through contract-startup and contract-work. Adopt existing paths/checks
+   when project.json is absent. If SPECS/ is missing, delegate discovery first;
+   report backlog_empty if no tasks exist. Preserve the original task descriptions.
+2. Select with work.sh next and --spec/--track. For free text, author one bounded
+   SPECS/backlog card with goal, behavior, dependencies, exclusions and observable
+   acceptance (pipeline/spec-board.md). Existing scope approval persists. Preview
+   actual files, prerequisites, model assignments and checks under --preview.
+3. Claim the task before edits. Capture existing changes; preserve the project's
+   architecture mapping and pure simulation rules. Resolve required ART dependencies
+   rather than claiming final acceptance with unfinished assets.
+4. Prepare bounded assignments and actually spawn the selected native models. A
+   simple patch uses the simple tier; cross-system work complex; algorithms/Blender
+   and critical lifecycle expert. Tester writes independent behavior tests. Reviewer
+   and verifier are read-only; run them over the relevant contracts and changed code.
+5. Repair concrete findings within the attempt budget. Escalate reasoning failures
+   with current diff, reproduction and rejected hypotheses, not full conversation.
+   Environment failures require environment diagnosis, not a more expensive model.
+6. Checkpoint stages; run registered affected gates directly, then mandatory final
+   gates. Do not spawn an LLM just to run a script. Existing project harnesses remain
+   authoritative. Missing real engine/device/provider evidence cannot become pass.
+7. Verify the normal player entry path and each acceptance item. Use the required
+   rendered/device evidence for visual work. In 2D, keep logical simulation pure
+   and replay-stable; in 3D, physics uses real scenarios with agreed tolerances.
+8. Close through work.sh with hashed acceptance evidence, actual manual checks,
+   independent reviewer/verifier results and completed ART dependencies. Refresh
+   the existing project handoff/state and run consistency. Report REVIEW/BLOCKED
+   precisely when something remains. Stop after one task unless a batch is explicitly
+   authorized and compatible with the project's execution contract.
 
-## 1. SPEC
-
-If the user gave free text, synthesise a SPEC. Existing approval of the brief
-covers implementation within its scope; ask only for unresolved material choices.
-
-```
-SPEC: <id>
-GOAL: <one sentence, in player-visible terms>
-LAYERS: content | sim | render | ui
-BEHAVIOUR:
-- <observable statement, testable>
-CONTENT: <data files added or changed, or "none">
-ART: <ART cards this needs — filed separately, not produced here>
-DETERMINISM: <how this stays replay-stable>
-OUT_OF_SCOPE: <what is deliberately not in this SPEC>
-DONE_WHEN:
-- <verifiable condition>
-```
-
-If the SPEC needs art, file the ART cards on `art/cards/backlog/` and continue
-with a placeholder-free implementation — code that works with the assets that
-exist. `--feature` never generates art; mixing the two makes a run that cannot be
-reviewed as one thing.
-
-## 2. Implement
-
-Spawn `{{PREFIX}}-developer-godot` with the approved SPEC. Move the SPEC to
-`{{AGENT_DIR}}/specs/active/`.
-
-## 3. Review
-
-Spawn `{{PREFIX}}-reviewer-godot` over the changed files. Any `blocker` returns to
-step 2 with the findings. Maximum two repair cycles; a third means the SPEC is
-wrong, and that goes back to the user rather than into a fourth attempt.
-
-## 4. Test
-
-Spawn `{{PREFIX}}-tester-godot` with the SPEC and the changed files. Tests are
-written by a different role than the code, deliberately.
-
-## 5. Gates
-
-Through `{{PREFIX}}-runner-godot`, quoting every JSON line verbatim:
-
-```
-{{AGENT_DIR}}/scripts/{{PREFIX}}-runner-godot.sh
-{{AGENT_DIR}}/scripts/{{PREFIX}}-sim-godot.sh --replay --seed <n>     # if sim/ changed
-{{AGENT_DIR}}/scripts/{{PREFIX}}-sim-godot.sh --balance               # if content changed
-```
-
-A failing gate returns to step 2. An `error_kind` stops the run and is reported as
-an environment problem — never silently skipped, and never treated as a pass.
-
-## 6. Verify
-
-Spawn `{{PREFIX}}-verifier-godot`. It asks whether the user would actually see
-this change in the running game. `pass:false` returns to step 2.
-
-## 7. Close out
-
-Move the SPEC to `done/`, run `{{PREFIX}}-docs`, present the verifier's manual
-checks in **{{UI_LANGUAGE}}**, and ask before pushing.
-
-## Output
-
-```
-=== FEATURE RUN ===
-SPEC: <id> — <goal>
-IMPLEMENTATION: <n files> — <the one-line summary>
-REVIEW: pass|fail after <n> cycles
-TESTS: <n tests across n files>
-GATES:
-- <each JSON line, verbatim>
-VERIFIER: <JSON line, verbatim>
-MANUAL_CHECKS:
-- <in {{UI_LANGUAGE}}>
-ART_CARDS_FILED: <ids, or "none">
-NOT_DONE: <what was left out and why>
-=== END FEATURE RUN ===
-```
+Return one FEATURE RUN block: SPEC, STATUS, FILES, MODELS (requested/observed),
+REVIEW, TESTS, GATE_JSON, EVIDENCE, MANUAL_CHECKS, NOT_DONE, NEXT_READY.

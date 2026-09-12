@@ -1,4 +1,4 @@
-<!-- gp-runtime-contracts: startup, art -->
+<!-- gp-runtime-contracts: startup, art, work -->
 
 # `--animate` — rig and animate one unit
 

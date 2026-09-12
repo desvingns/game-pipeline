@@ -15,12 +15,20 @@ even when the shell starts in a subdirectory. Never bootstrap inside the generat
 When a runbook says to spawn a specialist, use its native `.codex/agents/*.toml`
 adapter if the harness supports named agents. Otherwise read the matching
 `.codex/agents/*.md` and pass its body and bounded task to `spawn_agent` (or the
-available collaboration tool). Inherit model settings. Wait for its structured
+available collaboration tool). Read contract-work.md and pass the assignment's
+explicit model and reasoning settings from pipeline/model-policy.json. Wait for its structured
 result before dependent work. Parallelize only independent tasks with distinct
 write ownership. Reviewers and verifiers remain read-only and independent of
 the implementation. If delegation is unavailable, report that limitation before
 an implementation workflow requiring independent review; do not claim a self-review
 is independent. Read-only routing and gates can run without delegation.
+
+All projects use SPECS/. If it is absent, spawn the backlog-discovery role on
+gpt-5.6-luna / xhigh to inspect and migrate existing tasks before creating it.
+Report an empty backlog clearly. Use the shared work script for reservations,
+checkpoints, ownership, gate evidence and close-out. Do not copy full session history
+into each specialist. The recommended chat orchestrator is Sol / high; never change
+the user's primary model automatically.
 
 <!-- engine:2d -->
 For art, use the available native image generation tool after STYLE LOCK, then

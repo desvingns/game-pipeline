@@ -4,6 +4,37 @@ All notable changes to game-pipeline. SemVer: PATCH = wording, MINOR = additive
 (new agents, new profiles, new optional sections), MAJOR = renames or JSON-shape
 changes.
 
+## [1.0.0] — 2026-09-12
+
+### Changed
+
+- Shared `SPECS/` replaces tool-owned code boards. Missing boards are discovered
+  and migrated by a simple-tier specialist; Codex uses Luna xhigh, while Claude
+  selects a native model. Migration preserves originals and links, and is resumable.
+- Codex assignments use Luna xhigh / Sol xhigh / Astra high by difficulty. Claude
+  Code has an independent editable native-model policy. No provider bridge or
+  global model configuration is changed. Sol high is the recommended Codex coordinator.
+- One feature execution contract drives both dimensions; layer names and test
+  commands adapt to the existing game rather than reorganizing its architecture.
+
+### Added
+
+- Existing-project adoption; shared status, dependency selection, reservation,
+  recovery, bounded context, ownership, native dispatch descriptors, research
+  cache, observed usage and evidence-bound completion through `*-work.sh`.
+- Existing test adapters, impacted/final checks, acceptance traceability,
+  independent review freshness, ART dependencies, qualification metadata and
+  source/log digests. Missing requirements remain blocked rather than passing.
+- Versioned workflow schemas, per-tool policy, optional Blender assets for 2D,
+  regression coverage and a complete implementation map in docs/WORKFLOW.md.
+
+### Migration
+
+- Upgrade runtime with `--force` (or connect an existing game with `--adopt`).
+  Existing SPECS, configuration, memory, style lock and assets are preserved.
+- If only a legacy board exists, invoke the skill to run discovery/migration;
+  bootstrap does not silently create a competing empty board.
+
 ## [0.4.0] — 2026-09-04
 
 ### Added

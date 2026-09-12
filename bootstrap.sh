@@ -39,6 +39,9 @@ DRY_RUN=0
 SKIP_MEMORY=0
 NON_INTERACTIVE=0
 NO_GIT=0
+ADOPT=0
+BLENDER_ASSETS=0
+PREVIEW=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -60,6 +63,9 @@ while [ $# -gt 0 ]; do
         --skip-memory)           SKIP_MEMORY=1 ;;
         --non-interactive)       NON_INTERACTIVE=1 ;;
         --no-git)                NO_GIT=1 ;;
+        --adopt)                 ADOPT=1 ;;
+        --blender-assets)        BLENDER_ASSETS=1 ;;
+        --preview)               PREVIEW=1 ;;
         --help|-h)               cat "$TEMPLATES_ROOT/docs/USAGE.md"; exit 0 ;;
         *) echo "Unknown flag: $1 (use --help)" >&2; exit 1 ;;
     esac
@@ -187,7 +193,7 @@ for stamp in .codex/.gp-version .claude/.gp-version; do
         fi
     fi
 done
-if [ "$FORCE" -ne 1 ] && [ "$DRY_RUN" -ne 1 ]; then
+if [ "$FORCE" -ne 1 ] && [ "$DRY_RUN" -ne 1 ] && [ "$ADOPT" -ne 1 ] && [ "$PREVIEW" -ne 1 ]; then
     for path in "$AGENT_DIR" "$ROOT_DOC" CLAUDE.md STATE.md ROADMAP.md DOCUMENTATION.md art ".agents/skills/$SKILL_NAME"; do
         if [ -e "$path" ]; then
             echo "Existing $path — use --force to overwrite." >&2; exit 2
@@ -209,7 +215,17 @@ if [ "$DRY_RUN" -eq 1 ]; then
         echo "  ./AGENTS.md                             (Codex project instructions)"
     fi
     echo "  $AGENT_DIR/scripts/$PREFIX-*.sh + *.py     (gate scripts)"
-    echo "  $AGENT_DIR/specs/{backlog,active,done}/    (code board)"
+    echo "  SPECS/{backlog,done}/                   (shared board; discovered before first feature)"
+    echo "  pipeline/project.json + model-policy.json (preserved project configuration)"
+    echo "  Existing SPECS, game source, root documents and project configuration are preserved."
+    if [ "$ADOPT" -eq 1 ]; then
+        GP_WORK_SOURCE="$TEMPLATES_ROOT/templates/common/scripts/gp_work.py"
+        GP_WORK_TARGET="$DEST_ROOT"
+        if command -v cygpath >/dev/null 2>&1; then
+            GP_WORK_SOURCE=$(cygpath -m "$GP_WORK_SOURCE"); GP_WORK_TARGET=$(cygpath -m "$GP_WORK_TARGET")
+        fi
+        "$PRESET_PYTHON" "$GP_WORK_SOURCE" --root "$GP_WORK_TARGET" adopt
+    fi
     echo "  art/cards/{backlog,active,done}/           (art board)"
     echo "  art/style/profiles/*.json + art/schemas/*.json"
     echo "  art/style/reference/  art/prompts/  assets/inbox/"
@@ -262,7 +278,7 @@ EOF
 
 # ----- copy phase --------------------------------------------------------
 mkdir -p "$AGENT_DIR/agents" "$AGENT_DIR/commands/$PREFIX-runtime" \
-         "$AGENT_DIR/scripts" "$AGENT_DIR/specs" \
+         "$AGENT_DIR/scripts" \
          art/style/profiles art/style/reference art/prompts art/schemas \
          art/cards assets/inbox
 
@@ -288,11 +304,16 @@ for src in "$TEMPLATES_ROOT"/templates/common/commands/runtime/*; do
     cp "$src" "$AGENT_DIR/commands/$PREFIX-runtime/$(basename "$src")"
 done
 
-# 3. Boards.
-cp "$TEMPLATES_ROOT/templates/common/specs/README.md" "$AGENT_DIR/specs/README.md"
+# 3. Board reference. Never create SPECS before the discovery agent has inspected
+# an absent board. Code cards are shared by both tools, not installed per-tool.
+mkdir -p pipeline
+cp "$TEMPLATES_ROOT/templates/common/specs/README.md" pipeline/spec-board.md
+cp "$TEMPLATES_ROOT/templates/common/pipeline/model-policy.json" pipeline/model-policy.json
+mkdir -p pipeline/schemas
+cp "$TEMPLATES_ROOT"/schemas/work-*.schema.json pipeline/schemas/
 for board in backlog active done; do
-    mkdir -p "$AGENT_DIR/specs/$board" "art/cards/$board"
-    touch "$AGENT_DIR/specs/$board/.gitkeep" "art/cards/$board/.gitkeep"
+    mkdir -p "art/cards/$board"
+    touch "art/cards/$board/.gitkeep"
 done
 
 # 4. Gate scripts: art subsystem + engine.
@@ -338,6 +359,19 @@ if [ "$DIMENSION" = 3d ]; then
         "$PRESET_PYTHON" -c 'import json; from pathlib import Path; p=Path("pipeline/qa-contract.json"); d=json.loads(p.read_text()); d["scenarios"]["network"]=["two_process_peers","connect","replicate","authority","disconnect","rejoin"]; p.write_text(json.dumps(d,indent=2)+"\n")'
     fi
 fi
+# Blender asset production is independent from the game's dimension. 2D games
+# may build meshes/pre-render sources without receiving FPS/world instructions.
+if [ "$DIMENSION" = 2d ] && [ "$BLENDER_ASSETS" -eq 1 ]; then
+    mkdir -p pipeline/blender
+    cp "$TEMPLATES_ROOT"/templates/dimensions/3d/blender/*.py pipeline/blender/
+    cp "$TEMPLATES_ROOT/templates/dimensions/3d/scripts/gp_mesh.py" "$AGENT_DIR/scripts/"
+    cp "$TEMPLATES_ROOT/templates/dimensions/3d/scripts/gp_3d.py" "$AGENT_DIR/scripts/"
+    for mesh_script in "$TEMPLATES_ROOT"/templates/dimensions/3d/scripts/*mesh*.sh; do
+        cp "$mesh_script" "$AGENT_DIR/scripts/"
+    done
+    cp "$TEMPLATES_ROOT/profiles/style/stylized-3d.json" art/style/profiles/
+    cp "$TEMPLATES_ROOT"/schemas/mesh-*.json art/schemas/
+fi
 mkdir -p pipeline
 cat > pipeline/profile.json <<EOF
 {"profile_version":1,"preset":"$PRESET","dimension":"$DIMENSION","platform":"$PLATFORM","art_pipeline":"$ART_PIPELINE","genre":"$GENRE","network":"$NETWORK","style":"$STYLE_PROFILE","projection":"$PROJECTION"}
@@ -349,7 +383,7 @@ cp "$TEMPLATES_ROOT/profiles/style/$STYLE_PROFILE.json" "art/style/profiles/$STY
 cp "$TEMPLATES_ROOT/profiles/projection/$PROJECTION.json" "art/style/profiles/$PROJECTION.json"
 for src in "$TEMPLATES_ROOT"/schemas/*.json; do
     if [ "$DIMENSION" = 2d ]; then
-        case "$(basename "$src")" in mesh-*) continue ;; esac
+        case "$(basename "$src")" in mesh-*) continue ;; work-*) continue ;; esac
     else
         case "$(basename "$src")" in mesh-*) ;; *) continue ;; esac
     fi
@@ -378,7 +412,7 @@ RENDER_TARGETS=(
     "$AGENT_DIR"/agents/*.md
     "$AGENT_DIR"/commands/*.md
     "$AGENT_DIR"/commands/*/*.md
-    "$AGENT_DIR"/specs/*.md
+    pipeline/spec-board.md
     "$AGENT_DIR"/scripts/*
     ./CLAUDE.md ./AGENTS.md ./STATE.md ./ROADMAP.md ./DOCUMENTATION.md
     ".agents/skills/$SKILL_NAME/SKILL.md"
@@ -434,13 +468,28 @@ done
 if [ "$TOOL" = codex ]; then emit_codex_agents "$AGENT_DIR/agents"; fi
 for f in "$AGENT_DIR"/scripts/*.sh; do chmod +x "$f"; done
 
+# Concrete reviewable upgrade diff, without deploying generated runtime files.
+# Rendering is retained under archive; --dry-run remains the no-write outline.
+if [ "$PREVIEW" -eq 1 ]; then
+    GP_PREVIEW_SCRIPT="$STAGE/generated/$AGENT_DIR/scripts/gp_work.py"
+    GP_PREVIEW_ROOT="$DEST_ROOT"
+    GP_PREVIEW_STAGE="$STAGE/generated"
+    if command -v cygpath >/dev/null 2>&1; then
+        GP_PREVIEW_SCRIPT=$(cygpath -m "$GP_PREVIEW_SCRIPT")
+        GP_PREVIEW_ROOT=$(cygpath -m "$GP_PREVIEW_ROOT")
+        GP_PREVIEW_STAGE=$(cygpath -m "$GP_PREVIEW_STAGE")
+    fi
+    "$PRESET_PYTHON" "$GP_PREVIEW_SCRIPT" --root "$GP_PREVIEW_ROOT" upgrade-preview --generated "$GP_PREVIEW_STAGE"
+    exit 0
+fi
+
 # Deploy only files generated by this run. Preserve project state and frozen art.
 while IFS= read -r -d '' f; do
     rel="${f#./}"
     dst="$DEST_ROOT/$rel"
     if [ -f "$dst" ]; then
         case "$rel" in
-            STATE.md|ROADMAP.md|DOCUMENTATION.md|art/*|*/specs/*|pipeline/profile.json|pipeline/qa-contract.json|pipeline/toolchain.json) continue ;;
+            STATE.md|ROADMAP.md|DOCUMENTATION.md|art/*|SPECS/*|*/specs/*|pipeline/profile.json|pipeline/project.json|pipeline/model-policy.json|pipeline/qa-contract.json|pipeline/toolchain.json) continue ;;
             AGENTS.md|CLAUDE.md)
                 if ! grep -qE 'Generated by game-pipeline|^# Claude adapter$' "$dst"; then
                     echo "Preserved existing $rel; see archive/gp-bootstrap/$(basename "$STAGE")/generated/$rel for pipeline instructions." >&2
@@ -456,6 +505,12 @@ done < <(find . -type f -print0)
 # Empty working directories are part of the bootstrap contract too.
 while IFS= read -r -d '' d; do mkdir -p "$DEST_ROOT/${d#./}"; done < <(find . -type d -print0)
 cd "$DEST_ROOT"
+GP_WORK_SOURCE="$DEST_ROOT/$AGENT_DIR/scripts/gp_work.py"
+GP_WORK_TARGET="$DEST_ROOT"
+if command -v cygpath >/dev/null 2>&1; then
+    GP_WORK_SOURCE=$(cygpath -m "$GP_WORK_SOURCE"); GP_WORK_TARGET=$(cygpath -m "$GP_WORK_TARGET")
+fi
+"$PRESET_PYTHON" "$GP_WORK_SOURCE" --root "$GP_WORK_TARGET" adopt --apply
 
 # ----- memory phase -----------------------------------------------------
 if [ "$SKIP_MEMORY" -ne 1 ]; then

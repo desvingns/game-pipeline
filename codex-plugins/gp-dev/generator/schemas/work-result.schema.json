@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GP result",
+  "type": "object",
+  "required": [
+    "status",
+    "summary",
+    "changed_files",
+    "findings",
+    "checks",
+    "blockers"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "DONE",
+        "FAILED",
+        "BLOCKED"
+      ]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "findings": {
+      "type": "array"
+    },
+    "checks": {
+      "type": "array"
+    },
+    "blockers": {
+      "type": "array"
+    }
+  }
+}

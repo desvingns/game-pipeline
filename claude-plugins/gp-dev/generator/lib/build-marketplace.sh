@@ -192,10 +192,12 @@ copy_generator() {
     mkdir -p "$dst/generator"
     copy_file "$ROOT/bootstrap.sh" "$dst/generator/bootstrap.sh"
     copy_file "$ROOT/VERSION" "$dst/generator/VERSION"
+    copy_file "$ROOT/AGENTS.md" "$dst/generator/AGENTS.md"
     for dir in lib profiles schemas templates; do copy_tree "$ROOT/$dir" "$dst/generator/$dir"; done
     mkdir -p "$dst/generator/docs"
     copy_file "$ROOT/docs/USAGE.md" "$dst/generator/docs/USAGE.md"
     copy_file "$ROOT/docs/3D-WINDOWS.md" "$dst/generator/docs/3D-WINDOWS.md"
+    copy_file "$ROOT/docs/WORKFLOW.md" "$dst/generator/docs/WORKFLOW.md"
     chmod +x "$dst/generator/bootstrap.sh"
 }
 
@@ -291,6 +293,9 @@ print("marketplace-check: catalogs valid")
 PY
     validate_output "$ROOT/claude-plugins/gp-dev" claude
     validate_output "$ROOT/codex-plugins/gp-dev" codex
+    GP_PARITY_SCRIPT="$ROOT/lib/check-parity.py"
+    if command -v cygpath >/dev/null 2>&1; then GP_PARITY_SCRIPT=$(cygpath -m "$GP_PARITY_SCRIPT"); fi
+    "${GP_PYTHON:-python}" "$GP_PARITY_SCRIPT"
     exit 0
 fi
 

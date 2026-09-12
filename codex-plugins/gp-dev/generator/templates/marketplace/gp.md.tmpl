@@ -48,6 +48,7 @@ Windows, native bash elsewhere), never PowerShell.
 | `--feature` | `feature.md` | approved SPEC through implementation and gates |
 | `--balance` | `balance.md` | tune content against the applicable gate |
 | `--gates` | `gates.md` | run every applicable deterministic gate |
+| `--adopt`, `--doctor`, `--status`, `--resume`, `--metrics` | `work.md` | shared SPECS execution and diagnostics |
 
 Unknown or conflicting selectors are an error. Show this table and ask for one
 selector.
@@ -65,8 +66,13 @@ selector.
   frozen. Every generated image and 3D mesh carries provenance.
 - Gates report; agents do not claim a pass without the gate JSON. Reviewers warn
   and never fix.
-- All roles inherit the session model. Do not add a second baseline game,
+- Model policy is project-local: Codex Luna xhigh / Sol xhigh / Astra high;
+  Claude selects native models independently. Do not add a second baseline game,
   paired implementation, model benchmark or experiment protocol.
 
 The `--build` workflow delivers one game through the selected preset and ends
 with the package path, controls, gate evidence, visual review and known limits.
+
+All projects use SPECS/. For missing boards, delegate discovery before creating it.
+Read contract-work.md for --spec ID, --track NAME, --preview, --batch N and native
+model dispatch. Never silently create another per-tool board.

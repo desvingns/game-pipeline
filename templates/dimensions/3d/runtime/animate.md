@@ -1,4 +1,4 @@
-<!-- gp-runtime-contracts: startup, 3d -->
+<!-- gp-runtime-contracts: startup, 3d, work -->
 
 # --animate
 

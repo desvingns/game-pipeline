@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "mode": "tiered",
+  "claude": {
+    "mode": "auto",
+    "tiers": {},
+    "orchestrator": {},
+    "notes": "Claude Code selects its current native models; configure tiers here when known"
+  },
+  "orchestrator": {
+    "model": "gpt-5.6-sol",
+    "reasoning": "high"
+  },
+  "tiers": {
+    "simple": {
+      "model": "gpt-5.6-luna",
+      "reasoning": "xhigh"
+    },
+    "complex": {
+      "model": "gpt-5.6-sol",
+      "reasoning": "xhigh"
+    },
+    "expert": {
+      "model": "gpt-6-astra",
+      "reasoning": "high"
+    }
+  },
+  "max_concurrent_agents": 3,
+  "max_delegation_depth": 1,
+  "max_attempts_per_stage": 3,
+  "context_chars": 24000,
+  "fallbacks": {}
+}

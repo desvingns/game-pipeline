@@ -1,4 +1,4 @@
-<!-- gp-runtime-contracts: startup -->
+<!-- gp-runtime-contracts: startup, work -->
 
 # --build — complete the user's game brief
 

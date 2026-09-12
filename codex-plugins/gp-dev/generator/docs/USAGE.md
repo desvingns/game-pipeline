@@ -99,8 +99,10 @@ other selectors. Prefix underscores become hyphens in the skill name only; scrip
 and board paths retain the original prefix. Skills normally refresh automatically;
 reopen the project/session if the selector does not show the new skill.
 
-Native agent TOML files inherit the session model and point at the rendered
-Markdown role bodies. A harness without named-agent support can dispatch the same
+Native Codex agent TOML files declare role defaults; per-assignment routing uses
+pipeline/model-policy.json (Luna xhigh / Sol xhigh / Astra high). Claude Code
+selects its native models independently. Both adapters use the rendered Markdown
+role bodies. A harness without named-agent support can dispatch the same
 body through its available collaboration tool. Workflows requiring independent
 review report a limitation when delegation is unavailable. This installer does
 not change global models, permissions, trust or feature flags.
@@ -123,10 +125,10 @@ and [native subagents](https://learn.chatgpt.com/docs/agent-configuration/subage
 ## What you get
 
 ```
-.claude/agents/            14 specialists
+.claude/agents/            15 specialists
 .claude/commands/td.md     the orchestrator, plus td-runtime/ runbooks
 .claude/scripts/           gate scripts (bash interface, python where pixels are involved)
-.claude/specs/             code board: backlog / active / done
+SPECS/                    shared code board: backlog / done (status in card)
 art/cards/                 art board: backlog / active / done
 art/style/profiles/        the frozen style + projection profiles
 art/schemas/               prompt-spec and provenance contracts
@@ -205,3 +207,16 @@ grep -rn '{{\|<!-- engine:\|<!-- tool:\|<!-- if ' .claude art || echo "clean"
 
 The final grep must print `clean`. A leaked marker means a template authored two
 inline conditional blocks on one line, which the greedy inline `sed` pass merges.
+
+## Existing projects, shared backlog and model routing (v1)
+
+See [WORKFLOW.md](WORKFLOW.md) for the full execution contract, schemas and command
+examples. Use --adopt to preserve and connect an existing project; preview with
+--dry-run. Add --blender-assets to enable Blender assets independently of 2D/3D.
+All code tasks live in SPECS/. An absent board is discovered/migrated by a simple
+subagent (Codex Luna xhigh; Claude native choice); an empty backlog is reported.
+
+The recommended Codex chat orchestrator is GPT-5.6 Sol with high reasoning.
+Specialists use explicit project policy, while Claude maintains its own current
+models under claude.tiers. --status, --doctor, --resume, --metrics, --spec ID and
+--track NAME support existing backlog work. One SPEC per run remains the default.

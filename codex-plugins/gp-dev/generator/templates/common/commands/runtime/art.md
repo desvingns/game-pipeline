@@ -1,4 +1,4 @@
-<!-- gp-runtime-contracts: startup, art -->
+<!-- gp-runtime-contracts: startup, art, work -->
 
 # `--art` — take one ART card from card to integrated asset
 

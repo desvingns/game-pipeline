@@ -11,6 +11,9 @@ while IFS= read -r script; do bash -n "$script"; done < <(find templates/dimensi
 export GP_TEST_BASH
 GP_TEST_BASH=$(command -v bash)
 if command -v cygpath >/dev/null 2>&1; then GP_TEST_BASH=$(cygpath -m "$GP_TEST_BASH"); fi
+"${GP_PYTHON:-python}" tests/test_workflow.py
 "${GP_PYTHON:-python}" tests/test_pipeline.py
 "${GP_PYTHON:-python}" tests/test_fps.py
 "${GP_PYTHON:-python}" tests/test_marketplace.py
+"${GP_PYTHON:-python}" tests/test_adoption.py
+bash tests/check-python.sh lib/check-parity.py

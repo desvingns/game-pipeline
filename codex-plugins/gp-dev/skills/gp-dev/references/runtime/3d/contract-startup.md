@@ -9,7 +9,8 @@ Read, in this order, and stop reading as soon as the mode's needs are met:
 
 1. `AGENTS.md` — stack, layer contract, paths, commands.
 2. `STATE.md` — what is done, in flight, blocked.
-3. The relevant board: `.codex/specs/` for code work, `art/cards/` for art work.
+3. The relevant board: `SPECS/` for code work, `art/cards/` for art work.
+   If SPECS is absent, read contract-work.md and delegate backlog discovery first.
 4. For any mode that touches something visible: `art/style/style-bible.json`.
 
 Do not bulk-read `DOCUMENTATION.md`; open the section you need.
@@ -58,6 +59,6 @@ decision is listed at the end of the run.
 
 Every mode that changed anything ends with:
 
-1. The gate JSON lines, quoted verbatim.
+1. Concise gate JSON outcomes and paths to complete retained logs/evidence.
 2. `gp-docs` to refresh `STATE.md` and append history.
 3. A plain statement of what was not done and why.

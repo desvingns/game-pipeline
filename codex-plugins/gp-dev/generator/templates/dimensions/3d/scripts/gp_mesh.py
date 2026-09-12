@@ -231,7 +231,8 @@ def inspect_glb(path, spec, profile):
 
 
 def profile_data():
-    path = Path("art/style/profiles/{{STYLE_PROFILE}}.json")
+    # Mesh validation is independent from a 2D project's raster style selection.
+    path = Path("art/style/profiles/stylized-3d.json")
     return path, read_json(path)
 
 

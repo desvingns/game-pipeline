@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GP run",
+  "type": "object",
+  "required": [
+    "version",
+    "id",
+    "spec",
+    "owner",
+    "status",
+    "stage",
+    "baseline",
+    "checkpoints",
+    "gates",
+    "assignments"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "id": {
+      "type": "string"
+    },
+    "spec": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "BLOCKED",
+        "REVIEW",
+        "DONE"
+      ]
+    },
+    "stage": {
+      "type": "string"
+    },
+    "baseline": {
+      "type": "object"
+    },
+    "checkpoints": {
+      "type": "array"
+    },
+    "gates": {
+      "type": "object"
+    },
+    "assignments": {
+      "type": "array"
+    }
+  }
+}

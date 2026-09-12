@@ -19,3 +19,4 @@ audit record, opened on demand.
 | gp-004 | Review, gate hardening and working Codex deployment | 2026-09-04 |
 | gp-005 | Godot/Blender Windows FPS presets, production and execution gates | 2026-09-04 |
 | gp-006 | Dual-harness Game Pipeline marketplace | 2026-09-04 |
+| gp-007 | Unified backlog execution and model policy | 2026-09-12 |

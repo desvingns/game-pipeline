@@ -1,0 +1,297 @@
+"""Behavioral tests of the portable workflow; fixtures are retained under out/."""
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+import unittest
+import uuid
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "templates/common/scripts/gp_work.py"
+spec = importlib.util.spec_from_file_location("work", SOURCE)
+work = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(work)
+
+
+class WorkflowTests(unittest.TestCase):
+    def setUp(self):
+        self.root = ROOT / "out/workflow-tests" / uuid.uuid4().hex
+        self.root.mkdir(parents=True)
+        work.adopt(self.root, True)
+        (self.root / "SPECS/backlog").mkdir(parents=True)
+        (self.root / "SPECS/done").mkdir()
+
+    def put(self, path, text):
+        p = self.root / path
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text if isinstance(text, str) else json.dumps(text), encoding="utf-8")
+        return p
+
+    def card(self, key="TASK-1", deps=(), status="BACKLOG", meta=None):
+        where = "done" if status == "DONE" else "backlog"
+        text = f"# {key} — Observable behavior\n\nStatus: **{status}**\n\n## Goal\nA useful result.\n\n## Dependencies\n"
+        text += "\n".join("- " + d for d in deps)
+        text += "\n\n## Acceptance criteria\n1. The observable behavior works.\n"
+        if meta:
+            text += "\n<!-- gp-meta " + json.dumps(meta) + " -->\n"
+        return self.put(f"SPECS/{where}/{key}.md", text)
+
+    def assert_error(self, kind, callable, *args, **kwargs):
+        with self.assertRaises(work.WorkError) as exc:
+            callable(*args, **kwargs)
+        self.assertEqual(kind, exc.exception.kind, str(exc.exception))
+
+    def run_start(self):
+        self.card()
+        self.put("domain/rule.py", "VALUE = 1\n")
+        return work.claim(self.root, "TASK-1", "test-session")["run_id"]
+
+    def request(self, role="developer", paths=None):
+        return {"role": role, "goal": "Implement the bounded rule", "tool": "codex", "complexity": "simple",
+                "context": ["SPECS/backlog/TASK-1.md"], "write_paths": paths if paths is not None else ["domain/rule.py"]}
+
+    def finish(self, assignment, changed=None):
+        return work.finish_assignment(self.root, assignment, {"status": "DONE", "summary": "Checked", "changed_files": changed or [],
+                                                              "findings": [], "checks": [], "blockers": []})
+
+    def test_parse_plain_dependencies_and_metadata_hash(self):
+        self.card(deps=["TASK-2"])
+        c = work.board(self.root)[0]
+        self.assertEqual(["TASK-2"], c["dependencies"])
+        evidence = self.put("docs/evidence/TASK-1/summary.json", {"pass": True})
+        work.set_status(self.root, c, "DONE", str(evidence))
+        after = work.board(self.root)[0]
+        self.assertEqual(c["acceptance_sha256"], after["acceptance_sha256"])
+        self.assertTrue(work.completion_exists(self.root, after))
+        evidence.write_text("tampered", encoding="utf-8")
+        self.assertFalse(work.completion_exists(self.root, after))
+
+    def test_ready_requires_dependency_evidence_and_acceptance(self):
+        self.card("TASK-1", status="DONE")
+        self.card("TASK-2", deps=["TASK-1"])
+        rows = work.ready(self.root, work.board(self.root))
+        self.assertFalse(next(c for c in rows if c["id"] == "TASK-2")["ready"])
+        self.put("SPECS/backlog/TASK-3.md", "# TASK-3 — Empty\nStatus: BACKLOG\n")
+        self.assert_error("spec_not_ready", work.claim, self.root, "TASK-3", "session")
+
+    def test_numeric_card_does_not_crash(self):
+        p = self.put("SPECS/backlog/001-feature.md", "# Small feature\n\n## Acceptance criteria\n1. It works.\n")
+        self.assertEqual("general", work.parse_card(self.root, p)["track"])
+
+    def test_shared_board_order_and_track(self):
+        self.card("H12")
+        self.card("C01")
+        self.put("SPECS/INDEX.md", "# Board\n\n| [H12](backlog/H12.md) | BACKLOG |\n| [C01](backlog/C01.md) | BACKLOG |\n")
+        self.assertEqual("H12", work.ready(self.root, work.board(self.root))[0]["id"])
+        self.assertEqual("C01", work.ready(self.root, work.board(self.root), "C")[0]["id"])
+
+    def test_claim_conflict_and_same_run_recovery(self):
+        run_id = self.run_start()
+        work.checkpoint(self.root, run_id, "test", "Implement complete")
+        self.assert_error("spec_claimed", work.claim, self.root, "TASK-1", "other")
+        claim_path = self.root / ".ai/gp/claims/TASK-1.json"
+        claim = work.load(claim_path)
+        claim["heartbeat"] = time.time() - 7200
+        work.write(self.root, claim_path, claim)
+        recovered = work.claim(self.root, "TASK-1", "new-owner", True)
+        self.assertEqual(run_id, recovered["run_id"])
+        self.assertEqual("test", recovered["stage"])
+        self.assertEqual("new-owner", work.run_load(self.root, run_id)["owner"])
+
+    def test_resume_detects_acceptance_change(self):
+        run_id = self.run_start()
+        path = self.root / "SPECS/backlog/TASK-1.md"
+        path.write_text(work.read(path).replace("behavior works", "behavior changes"), encoding="utf-8")
+        self.assert_error("acceptance_changed", work.resume, self.root, run_id)
+
+    def test_codex_exact_tiers_and_claude_native_policy(self):
+        for tier, model, effort in [("simple", "gpt-5.6-luna", "xhigh"), ("complex", "gpt-5.6-sol", "xhigh"), ("expert", "gpt-6-astra", "high")]:
+            selected = work.route(self.root, {"complexity": tier})
+            self.assertEqual((model, effort), (selected["model"], selected["reasoning"]))
+        self.assertEqual("expert", work.route(self.root, {"risk": {"blender": True}})["tier"])
+        self.assertEqual("complex", work.route(self.root, {"attempt": 2, "failure_kind": "reasoning"})["tier"])
+        self.assert_error("external_blocker", work.route, self.root, {"attempt": 2, "failure_kind": "environment"})
+        self.assertIsNone(work.route(self.root, {"tool": "claude"})["model"])
+        config = work.policy(self.root)
+        config["claude"]["tiers"]["simple"] = {"model": "native-test-model", "reasoning": "high"}
+        self.put("pipeline/model-policy.json", config)
+        self.assertEqual("native-test-model", work.route(self.root, {"tool": "claude"})["model"])
+
+    def test_context_budget_and_explicit_allowlist(self):
+        self.card()
+        packet = work.context_packet(self.root, self.request())
+        self.assertIn("TASK-1", packet["text"])
+        self.assertIn("SPECS/backlog/TASK-1.md", packet["hashes"])
+        self.assert_error("authoring_context_violation", work.context_packet, self.root, self.request() | {"execution_scope": "evaluated-authoring", "allowlist": []})
+        self.put("large.md", "x" * 25000)
+        self.assert_error("context_budget_exceeded", work.context_packet, self.root, {"context": ["large.md"]})
+
+    def test_research_cache_invalidates_on_source_change(self):
+        self.card()
+        work.research_cache(self.root, "rules", self.request() | {"summary": "The contract has one observable acceptance criterion"})
+        self.assertEqual("hit", work.research_cache(self.root, "rules")["status"])
+        self.card(meta={"acceptance_ids": ["AC1"]})
+        self.assertEqual("stale", work.research_cache(self.root, "rules")["status"])
+
+    def test_mapped_repository_hashes_and_write_boundary(self):
+        sdk = self.root.parent / ("sdk-" + uuid.uuid4().hex)
+        sdk.mkdir()
+        (sdk / "contract.md").write_text("# SDK contract\n", encoding="utf-8")
+        config = work.project(self.root)
+        config["repositories"]["sdk"] = {"path": str(sdk), "writable": False, "version": "v1"}
+        self.put("pipeline/project.json", config)
+        before = work.json_hash(work.snapshot(self.root))
+        packet = work.context_packet(self.root, {"context": [{"repository": "sdk", "path": "contract.md"}]})
+        self.assertIn("@sdk/contract.md", packet["hashes"])
+        self.assert_error("repository_readonly", work.repository_root, self.root, "sdk", True)
+        (sdk / "contract.md").write_text("# SDK v2\n", encoding="utf-8")
+        self.assertNotEqual(before, work.json_hash(work.snapshot(self.root)))
+
+    def test_coordinator_usage_is_observed_not_estimated(self):
+        work.record_usage(self.root, {"actor": "orchestrator", "model": "unknown", "usage": None})
+        metrics = work.metrics(self.root)
+        self.assertIsNone(metrics["coordinator_and_tools"][0]["usage"])
+        self.assertIsNone(metrics["api_cost"])
+
+    def test_assign_dispatch_ownership_and_observed_model(self):
+        run_id = self.run_start()
+        a = work.assign(self.root, run_id, self.request())
+        self.assertEqual("gpt-5.6-luna", a["dispatch"]["model"])
+        self.assertFalse(a["dispatch"]["fork_history"])
+        self.assert_error("write_conflict", work.assign, self.root, run_id, self.request())
+        self.put("domain/rule.py", "VALUE = 2\n")
+        result = {"status": "DONE", "summary": "Changed", "changed_files": ["domain/rule.py"], "findings": [], "checks": [], "blockers": [], "actual_model": "gpt-6-astra"}
+        self.assert_error("model_mismatch", work.finish_assignment, self.root, a["assignment_id"], result)
+        result["actual_model"] = "gpt-5.6-luna"
+        work.finish_assignment(self.root, a["assignment_id"], result)
+        self.assertEqual(1, work.metrics(self.root)["models"]["gpt-5.6-luna"]["done"])
+
+    def test_readonly_and_attempt_budget(self):
+        run_id = self.run_start()
+        self.assert_error("readonly_role", work.assign, self.root, run_id, self.request("reviewer"))
+        for _ in range(3):
+            a = work.assign(self.root, run_id, self.request("reviewer", []))
+            self.finish(a["assignment_id"])
+        self.assert_error("attempt_budget_exhausted", work.assign, self.root, run_id, self.request("reviewer", []))
+
+    def configure_gate(self, code="print('{\"pass\":true}')", adapter="json-line"):
+        config = work.project(self.root)
+        config["gates"] = [{"id": "behavior", "command": [sys.executable, "-c", code], "always": True, "result": adapter}]
+        self.put("pipeline/project.json", config)
+
+    def test_real_process_gate_retains_and_invalidates_evidence(self):
+        self.configure_gate()
+        run_id = self.run_start()
+        result = work.run_gate(self.root, run_id, "behavior")
+        self.assertTrue(result["pass"])
+        self.assertEqual([], work.resume(self.root, run_id)["stale_gates"])
+        self.put("domain/rule.py", "VALUE = 3\n")
+        self.assertEqual(["behavior"], work.resume(self.root, run_id)["stale_gates"])
+
+    def test_gate_error_cannot_pass(self):
+        self.configure_gate("print('{\"pass\":true,\"error_kind\":\"missing_device\"}')")
+        run_id = self.run_start()
+        self.assertFalse(work.run_gate(self.root, run_id, "behavior")["pass"])
+
+    def test_complete_end_to_end_and_idempotency(self):
+        self.configure_gate()
+        run_id = self.run_start()
+        gate = work.run_gate(self.root, run_id, "behavior")
+        for role in ("reviewer", "verifier"):
+            assignment = work.assign(self.root, run_id, self.request(role, []))
+            self.finish(assignment["assignment_id"])
+        path = self.root / gate["evidence"]
+        evidence = {"run_id": run_id, "source_sha256": work.json_hash(work.snapshot(self.root)),
+                    "acceptance": [{"id": "AC1", "status": "pass", "evidence": gate["evidence"], "sha256": work.digest(path)}]}
+        work.close(self.root, run_id, "DONE", evidence)
+        self.assertTrue((self.root / "SPECS/done/TASK-1.md").exists())
+        self.assertFalse((self.root / ".ai/gp/claims/TASK-1.json").exists())
+        self.assertTrue(work.close(self.root, run_id, "DONE", evidence)["already_closed"])
+        self.assertTrue(work.completion_exists(self.root, work.board(self.root)[0]))
+        self.assertTrue(work.consistency(self.root)["pass"])
+
+    def test_missing_acceptance_evidence_cannot_close(self):
+        run_id = self.run_start()
+        self.assert_error("evidence_missing", work.close, self.root, run_id, "DONE")
+        self.assertEqual("ACTIVE", work.board(self.root)[0]["status"])
+
+    def test_consistency_missing_index_and_stale_next(self):
+        self.card()
+        self.put("SPECS/INDEX.md", "# Empty index\n")
+        self.assertIn("index_card_missing", [f["kind"] for f in work.consistency(self.root)["findings"]])
+        work.sync_index(self.root)
+        self.assertNotIn("index_card_missing", [f["kind"] for f in work.consistency(self.root)["findings"]])
+
+    def test_cli_bad_argument_one_json_line(self):
+        proc = subprocess.run([sys.executable, str(SOURCE), "--root", str(self.root), "nonsense"], capture_output=True, text=True)
+        self.assertNotEqual(0, proc.returncode)
+        self.assertEqual("bad_usage", json.loads(proc.stdout)["error_kind"])
+        self.assertEqual("", proc.stderr)
+
+    def test_adopt_preserves_custom_config(self):
+        config = work.project(self.root)
+        config["architecture"]["profile"] = "custom"
+        self.put("pipeline/project.json", config)
+        work.adopt(self.root, True)
+        self.assertEqual("custom", work.project(self.root)["architecture"]["profile"])
+
+    def test_upgrade_preview_shows_diff_and_preserves_user_config(self):
+        self.put(".codex/commands/gp.md", "old instruction\n")
+        self.put("archive/render/.codex/commands/gp.md", "new instruction\n")
+        self.put("archive/render/pipeline/model-policy.json", {"custom": False})
+        before = (self.root / "pipeline/model-policy.json").read_bytes()
+        plan = work.upgrade_preview(self.root, "archive/render")
+        self.assertFalse(plan["applied"])
+        self.assertIn("-old instruction", next(x for x in plan["changes"] if x["action"] == "update")["diff"])
+        self.assertEqual(before, (self.root / "pipeline/model-policy.json").read_bytes())
+
+
+class MigrationTests(unittest.TestCase):
+    def setUp(self):
+        self.root = ROOT / "out/workflow-migration" / uuid.uuid4().hex
+        self.root.mkdir(parents=True)
+
+    def put(self, name, text):
+        p = self.root / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text, encoding="utf-8")
+        return p
+
+    def test_absence_and_empty_board(self):
+        self.assertEqual("gpt-5.6-luna", work.discover(self.root)["dispatch"]["model"])
+        self.assertIsNone(work.discover(self.root, "claude")["dispatch"]["model"])
+        result = work.migrate(self.root, {"version": 1, "moves": []}, True)
+        self.assertEqual("backlog_empty", result["status"])
+        self.assertEqual([], work.board(self.root))
+
+    def test_migrate_preserves_active_status_and_repairs_links(self):
+        src = self.put(".claude/specs/active/TASK-1.md", "# TASK-1 — Feature\n[Guide](../../../docs/guide.md)\n\n## Acceptance criteria\n1. It works.\n")
+        self.put("docs/guide.md", "# Guide\n[Task](../.claude/specs/active/TASK-1.md)\n")
+        plan = {"version": 1, "moves": [{"source": ".claude/specs/active/TASK-1.md", "target": "SPECS/backlog/TASK-1.md", "sha256": work.digest(src)}]}
+        work.migrate(self.root, plan, True)
+        self.assertEqual("ACTIVE", work.board(self.root)[0]["status"])
+        self.assertIn("../../docs/guide.md", work.read(self.root / "SPECS/backlog/TASK-1.md"))
+        self.assertIn("../SPECS/backlog/TASK-1.md", work.read(self.root / "docs/guide.md"))
+        self.assertTrue(list((self.root / "archive/gp-work").glob("**/TASK-1.md")))
+
+    def test_reject_hidden_card_destination(self):
+        src = self.put("backlog/TASK-1.md", "# TASK-1 — Feature\n")
+        plan = {"version": 1, "moves": [{"source": "backlog/TASK-1.md", "target": "SPECS/INDEX.md", "sha256": work.digest(src)}]}
+        with self.assertRaises(work.WorkError):
+            work.migrate(self.root, plan, True)
+        self.assertTrue(src.exists())
+        self.assertFalse((self.root / "SPECS").exists())
+
+    def test_bad_encoding_fails_before_any_move(self):
+        src = self.put("backlog/TASK-1.md", "# TASK-1 — Feature\n")
+        (self.root / "bad.md").write_bytes(b"\xff\xff")
+        plan = {"version": 1, "moves": [{"source": "backlog/TASK-1.md", "target": "SPECS/backlog/TASK-1.md", "sha256": work.digest(src)}]}
+        with self.assertRaises(UnicodeDecodeError):
+            work.migrate(self.root, plan, True)
+        self.assertTrue(src.exists())
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

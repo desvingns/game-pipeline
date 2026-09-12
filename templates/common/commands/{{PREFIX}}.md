@@ -46,6 +46,11 @@ workflow from memory.
 | `--feature` | `feature.md` | SPEC to shipped: develop, review, test, gates, verify, docs |
 | `--balance` | `balance.md` | tune content numbers against the balance gate |
 | `--gates` | `gates.md` | run every applicable gate and report |
+| `--adopt` | `work.md` | map an existing project's architecture and real checks |
+| `--doctor` | `work.md` | inspect required tools and qualification gaps |
+| `--status` | `work.md` | report the shared board, readiness and inconsistencies |
+| `--resume` | `work.md` | resume a saved run, checking stale evidence |
+| `--metrics` | `work.md` | observed model usage, retries and unknowns |
 
 Unknown or conflicting selectors are an error: show this table and ask the user to choose one.
 
@@ -53,6 +58,9 @@ Unknown or conflicting selectors are an error: show this table and ask the user 
 
 - `--next` — with `--feature` or `--art`, take the top item from the corresponding board instead of
   a free-text description.
+- `--spec ID`, `--track NAME` — select a ready SPEC or track in SPECS/.
+- `--preview` — show selection, prerequisites, proposed files, model routing and checks before writes.
+- `--batch N` — explicitly authorized bounded sequence; default is one SPEC.
 - `--unattended` — declares nobody is watching. Advisory gates proceed on their recommended default
   and are listed in a "decisions taken while unattended" summary. Existing scope
   approval persists. Unapproved STYLE LOCK, material scope changes and outward
@@ -76,5 +84,12 @@ Unknown or conflicting selectors are an error: show this table and ask the user 
   agent session — the agent writes the record itself.
 - **Gates report, agents do not.** A pass claimed without the gate's JSON line is not a pass.
 - **Reviewers warn, they never fix.**
-- **Roles inherit the session model.** Do not switch models between production
-  roles without the user's request. Keep image/audio providers explicit.
+- **Use the project model policy.** Codex routes bounded assignments to Luna xhigh,
+  Sol xhigh or Astra high. Claude Code independently selects its native models.
+  Actual spawn settings must match the assignment; report unavailable models.
+  Keep image/audio providers explicit. Load contract-work for delegation and boards.
+
+Directory names in the default layer examples are mapped through
+pipeline/project.json for existing projects. Keep the engine-free deterministic
+logical domain contract intact regardless of its directory name. Preserve the
+project's explicit use-case, repository, mapper and composition boundaries.
