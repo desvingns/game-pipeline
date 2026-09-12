@@ -4,6 +4,35 @@ All notable changes to game-pipeline. SemVer: PATCH = wording, MINOR = additive
 (new agents, new profiles, new optional sections), MAJOR = renames or JSON-shape
 changes.
 
+## [1.2.0] — 2026-09-12
+
+### Changed
+
+- Claude Code model policy is explicit: simple Sonnet 5 / medium, complex
+  Sonnet 5 / xhigh, expert Opus 5 / xhigh (`claude.tiers`, full model IDs).
+  Assignments pass the tier model as the Agent tool `model` parameter.
+- Claude Code has no per-spawn effort, so bootstrap pins `model` and `effort` into
+  every Claude role's frontmatter from `claude.role_tiers` (default complex; docs,
+  runner and backlog-discovery simple; art-prompter and animator expert). Route and
+  dispatch report the applied effort (`reasoning_effort`) beside the tier's
+  (`tier_reasoning_effort`, `effort_source`); reasoning checks stay strict.
+- Claude read-only roles are tool-enforced: the 2D reviewer and verifier no longer
+  have Bash and receive changed files, the run diff and evidence paths instead.
+
+### Added
+
+- Claude projects get project-scoped `.claude/settings.json` allow rules for the
+  installed work and gate scripts, merged into an existing file (archived first).
+  STYLE LOCK `--lock` always asks; image generation keeps its default prompt.
+- `claude.max_turns` pins `maxTurns` in role frontmatter (runner: 8).
+
+### Migration
+
+- 1.1 policies with an empty `claude` block keep working: missing entries use the
+  new defaults. Set `claude.mode` to `native` to keep session-selected models.
+- Re-run bootstrap `--force` to pin role frontmatter; a preserved project policy,
+  not the template, decides the pinned tiers.
+
 ## [1.1.0] — 2026-09-12
 
 ### Added

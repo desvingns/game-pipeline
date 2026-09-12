@@ -101,3 +101,27 @@ Unassigned — follow-up game vertical slice and engine harness integration.
   model settings or bridges through the Codex CLI. Claude reports unsupported.
 - Marketplace, source-parity and full smoke tests pass; both installed plugins
   are updated to 1.1.0. See docs/WORKFLOW.md and docs/USAGE.md.
+
+## Update — 2026-09-12: v1.2 explicit Claude Code models (Claude Code)
+
+- Completed gp-008: Claude tiers simple Sonnet 5 medium / complex Sonnet 5 xhigh /
+  expert Opus 5 xhigh (full IDs). Spawns pass the tier model; effort is pinned per
+  role in `.claude/agents/*.md` frontmatter from `claude.role_tiers` by
+  `lib/claude.sh` + `lib/claude_agents.py` (preserved project policy wins).
+- DECISION (user): role-default effort pinning, not per-tier agent copies; route
+  and dispatch report applied effort beside the tier's (`tier_reasoning_effort`,
+  `effort_source`), reasoning checks stay strict. 1.1 policies with an empty
+  claude block fall back to defaults; `claude.mode: native` opts out.
+- Fixed during validation: the adapter import left `__pycache__` in staged scripts
+  that bootstrap deployed; bytecode writes are now disabled.
+- 2026-09-13 follow-up (user-approved): 2D reviewer/verifier lost Bash (read-only
+  now tool-enforced, packet carries diff/evidence); bootstrap merges project-scoped
+  `.claude/settings.json` allow rules for installed scripts (`--lock` asks,
+  art-gen keeps its prompt); `claude.max_turns` pins runner maxTurns 8.
+- Docs for Claude Code 2.1.270 still list no per-spawn effort. The desktop app
+  bundles 2.1.266; the npm `claude` on PATH is 2.1.197.
+- Released 1.2.0: committed and pushed to origin/main; the Claude marketplace
+  (Directory source D:\Pet\game-pipeline) and gp-dev plugin were refreshed.
+  The Codex plugin install was not refreshed in this session.
+- NEXT: live Claude dispatch check of one simple SPEC in a sandbox game; existing
+  games need bootstrap `--force`/`--adopt` to receive frontmatter and settings.

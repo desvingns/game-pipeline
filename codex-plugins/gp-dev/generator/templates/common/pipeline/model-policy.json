@@ -2,10 +2,34 @@
   "version": 1,
   "mode": "tiered",
   "claude": {
-    "mode": "auto",
-    "tiers": {},
+    "mode": "tiered",
+    "tiers": {
+      "simple": {
+        "model": "claude-sonnet-5",
+        "reasoning": "medium"
+      },
+      "complex": {
+        "model": "claude-sonnet-5",
+        "reasoning": "xhigh"
+      },
+      "expert": {
+        "model": "claude-opus-5",
+        "reasoning": "xhigh"
+      }
+    },
+    "role_tiers": {
+      "default": "complex",
+      "backlog-discovery": "simple",
+      "docs": "simple",
+      "runner": "simple",
+      "art-prompter": "expert",
+      "animator": "expert"
+    },
+    "max_turns": {
+      "runner": 8
+    },
     "orchestrator": {},
-    "notes": "Claude Code selects its current native models; configure tiers here when known"
+    "notes": "Spawns pass the tier model; effort comes from each role agent's frontmatter (role_tiers) because Claude Code has no per-spawn effort. mode native restores session-selected models"
   },
   "orchestrator": {
     "model": "gpt-5.6-sol",

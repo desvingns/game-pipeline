@@ -1,9 +1,11 @@
 """Observable bootstrap/gate regressions; no network or real Godot required."""
 import copy
+import importlib.util
 import json
 import os
 from pathlib import Path
 import py_compile
+import re
 import subprocess
 import sys
 import tempfile
@@ -118,6 +120,76 @@ fi
         self.assertIn("--chain", codex_router)
         self.assertIn("create_thread", codex_contract)
         self.assertNotIn("create_thread", claude_contract)
+
+    def test_01_claude_frontmatter_matches_runtime_policy(self):
+        project = self.projects["claude"]
+        spec = importlib.util.spec_from_file_location("claude_work", project / ".claude/scripts/gp_work.py")
+        work = importlib.util.module_from_spec(spec)
+        previous, sys.dont_write_bytecode = sys.dont_write_bytecode, True
+        try:  # keep the generated fixture free of __pycache__
+            spec.loader.exec_module(work)
+        finally:
+            sys.dont_write_bytecode = previous
+        policy = work.policy(project)
+        roles = sorted((project / ".claude/agents").glob("*.md"))
+        self.assertEqual(len(roles), 15)
+        for path in roles:
+            text = path.read_text(encoding="utf-8")
+            role = path.stem.removeprefix("td-").removesuffix("-godot")
+            setting = work.claude_role_setting(policy, role)
+            self.assertIn(f"\nmodel: {setting['model']}\neffort: {setting['reasoning']}\n", text.split("---")[1])
+            self.assertEqual(1, text.count("\nmodel:"))
+            self.assertEqual(setting["reasoning"], work.route(project, {"tool": "claude", "role": role})["reasoning"])
+            front = text.split("---")[1]
+            turns = work.claude_role_max_turns(policy, role)
+            if turns:
+                self.assertIn(f"\nmaxTurns: {turns}\n", front)
+            else:
+                self.assertNotIn("maxTurns:", front)
+            if role in work.READ_ONLY:
+                tools = re.search(r"^tools: (.*)$", front, re.M).group(1)
+                self.assertLessEqual({name.strip() for name in tools.split(",")}, {"Read", "Glob", "Grep"})
+        self.assertEqual(8, work.claude_role_max_turns(policy, "runner"))
+        self.assertIn("\nmodel: claude-sonnet-5\neffort: medium\n", (project / ".claude/agents/td-docs.md").read_text(encoding="utf-8"))
+        self.assertIn("\nmodel: claude-opus-5\neffort: xhigh\n", (project / ".claude/agents/td-art-prompter.md").read_text(encoding="utf-8"))
+
+    def test_01_claude_project_permissions(self):
+        self.assertFalse((self.projects["codex"] / ".claude/settings.json").exists())
+        settings = json.loads((self.projects["claude"] / ".claude/settings.json").read_text(encoding="utf-8"))
+        allow, ask = settings["permissions"]["allow"], settings["permissions"]["ask"]
+        for name in ("work", "runner-godot", "sim-godot", "visual-godot", "asset-validate"):
+            self.assertIn(f"Bash(bash .claude/scripts/td-{name}.sh *)", allow)
+        self.assertIn("Bash(bash .claude/scripts/td-style-lock.sh --verify *)", allow)
+        self.assertEqual(["Bash(bash .claude/scripts/td-style-lock.sh *--lock*)"], ask)
+        self.assertFalse([rule for rule in allow if "art-gen" in rule or "common" in rule or "--lock" in rule])
+
+    def test_02_claude_force_pins_preserved_policy(self):
+        cwd = self.projects["claude"]
+        path = cwd / "pipeline/model-policy.json"
+        policy = json.loads(path.read_text(encoding="utf-8"))
+        policy["claude"]["role_tiers"]["developer"] = "expert"
+        path.write_text(json.dumps(policy), encoding="utf-8")
+        settings_path = cwd / ".claude/settings.json"
+        custom = {"env": {"GP_SHOT_RENDERER": "gl_compatibility"},
+                  "permissions": {"allow": ["Bash(make *)"], "deny": ["Bash(git push *)"]}}
+        settings_path.write_text(json.dumps(custom), encoding="utf-8")
+        result = bootstrap(cwd, "claude", "--force", "--memory-path=" + str(cwd / "memory"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(policy, json.loads(path.read_text(encoding="utf-8")))
+        developer = (cwd / ".claude/agents/td-developer-godot.md").read_text(encoding="utf-8")
+        self.assertIn("\nmodel: claude-opus-5\neffort: xhigh\n", developer)
+        self.assertEqual(1, developer.count("\nmodel:"))
+        merged = json.loads(settings_path.read_text(encoding="utf-8"))
+        self.assertEqual(custom["env"], merged["env"])
+        self.assertEqual(["Bash(git push *)"], merged["permissions"]["deny"])
+        self.assertEqual("Bash(make *)", merged["permissions"]["allow"][0])
+        self.assertEqual(1, merged["permissions"]["allow"].count("Bash(bash .claude/scripts/td-work.sh *)"))
+        self.assertTrue(list((cwd / "archive/gp-bootstrap").glob("*/previous/.claude/settings.json")))
+        spec = importlib.util.spec_from_file_location("claude_settings", ROOT / "lib/claude_settings.py")
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        self.assertEqual({"allow": [], "ask": []}, helper.merge(cwd, "td", RUN / "unused-archive"))
+        self.assertFalse((RUN / "unused-archive").exists())
 
     def test_02_force_preserves_user_work_and_memory(self):
         preserved = {

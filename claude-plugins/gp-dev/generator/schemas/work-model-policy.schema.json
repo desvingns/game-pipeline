@@ -35,7 +35,29 @@
       ]
     },
     "claude": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "tiered",
+            "auto",
+            "native"
+          ]
+        },
+        "tiers": {
+          "type": "object"
+        },
+        "role_tiers": {
+          "type": "object"
+        },
+        "max_turns": {
+          "type": "object"
+        },
+        "orchestrator": {
+          "type": "object"
+        }
+      }
     },
     "max_concurrent_agents": {
       "type": "integer",

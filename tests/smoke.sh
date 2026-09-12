@@ -8,6 +8,7 @@ for script in bootstrap.sh install-codex.sh lib/*.sh tests/*.sh \
     bash -n "$script"
 done
 while IFS= read -r script; do bash -n "$script"; done < <(find templates/dimensions -name '*.sh' -type f)
+"${GP_PYTHON:-python}" -m py_compile lib/claude_agents.py lib/claude_settings.py
 export GP_TEST_BASH
 GP_TEST_BASH=$(command -v bash)
 if command -v cygpath >/dev/null 2>&1; then GP_TEST_BASH=$(cygpath -m "$GP_TEST_BASH"); fi

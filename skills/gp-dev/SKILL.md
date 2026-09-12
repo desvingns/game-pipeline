@@ -48,14 +48,15 @@ For an existing game use bootstrap --adopt (preview with --dry-run), preserving
 its source, architecture, tests, documents and custom configurations. Read the
 project's contract-work.md and pipeline/project.json. All projects and both tools
 use SPECS/. If absent, dispatch the backlog-discovery specialist before creating
-it: Codex gpt-5.6-luna / xhigh; Claude Code selects its native simple-task model.
+it: Codex gpt-5.6-luna / xhigh; Claude Code its simple tier (Sonnet 5 / medium).
 Migrate actual tasks with their text, IDs, evidence and links; report an empty
 backlog explicitly. Never fabricate tasks or silently create a competing board.
 
 Use --feature --next, --spec ID, --track NAME, --preview, --resume RUN, --status,
 --doctor and --metrics as applicable. One task per run unless explicitly authorized
 otherwise. Delegate bounded tasks using pipeline/model-policy.json: Codex Luna xhigh,
-Sol xhigh, Astra high by difficulty; Claude models are independently selected and
-can be updated in claude.tiers. Keep the primary chat model unchanged; recommended
-Codex orchestrator is Sol high. Use the shared script for claims, ownership,
-checkpoints, actual gate evidence and close-out. See docs/WORKFLOW.md in the generator.
+Sol xhigh, Astra high by difficulty; Claude Code Sonnet 5 medium, Sonnet 5 xhigh,
+Opus 5 xhigh (claude.tiers; effort pinned per role agent via claude.role_tiers). Keep
+the primary chat model unchanged; recommended Codex orchestrator is Sol high. Use the
+shared script for claims, ownership, checkpoints, actual gate evidence and close-out.
+See docs/WORKFLOW.md in the generator.

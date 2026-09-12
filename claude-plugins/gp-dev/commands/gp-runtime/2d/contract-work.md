@@ -8,10 +8,10 @@ preserve its index, ID scheme, order and scope. Planning alone is not approval;
 the user's request to implement the selected approved scope remains authorization.
 
 If SPECS/ is absent, **spawn backlog-discovery before creating it**: Codex must
-select gpt-5.6-luna / xhigh explicitly. Claude uses its independently configured
-native simple model. Pass only candidate paths from `work.sh discover` and the
+select gpt-5.6-luna / xhigh explicitly. Claude uses its simple tier (Sonnet 5 /
+medium by default). Pass only candidate paths from `work.sh discover` and the
 discovery role. Wait for migration and validate its result. If delegation/model is
-unavailable, report the limitation; do not silently perform a claimed Luna task.
+unavailable, report the limitation; do not silently perform a claimed simple-tier task.
 A present empty board or a discovery with no tasks means backlog_empty: tell the
 user clearly and stop implementation. Never create filler tasks.
 
@@ -31,21 +31,38 @@ and stop; this modifier opens successor tasks only through Codex.
 ## Models and native dispatch
 
 Read `pipeline/model-policy.json` once. Codex: simple Luna xhigh, complex Sol xhigh,
-expert Astra high. Assign by bounded subtask, not role name or S/M card size. Blender,
-new algorithms, replay codecs and critical concurrency/lifecycle can go straight
-to expert. Independent review uses a suitable floor for the reviewed risk.
-Claude Code chooses its own native models; `claude.tiers` can be filled with current
-model names by Claude. Empty entries mean native selection, never GPT substitution.
-Do not edit global model settings. Recommended Codex chat orchestrator: Sol high;
-the user's selected primary model remains unchanged by this skill.
+expert Astra high. Claude Code (`claude.tiers`): simple Sonnet 5 medium, complex
+Sonnet 5 xhigh, expert Opus 5 xhigh. Assign by bounded subtask, not role name or S/M
+card size. Blender, new algorithms, replay codecs and critical concurrency/lifecycle
+can go straight to expert. Independent review uses a suitable floor for the reviewed
+risk. Never substitute one provider's models in the other tool. Do not edit global
+model settings. Recommended Codex chat orchestrator: Sol high; the user's selected
+primary model remains unchanged by this skill.
+
+
+Claude Code accepts a per-spawn model but no per-spawn effort. Each role agent pins
+`model` and `effort` in frontmatter from its `claude.role_tiers` default; the spawn
+passes the tier model. The descriptor's `reasoning_effort` is the effort that actually
+applies and `tier_reasoning_effort` is the tier's value; report a difference, never
+hide it. Missing Claude entries use the generator defaults; `claude.mode: native`
+leaves model and effort to the session. After editing Claude tiers or role_tiers,
+re-run bootstrap `--force` so the role frontmatter matches the policy.
+
+Bootstrap merges `.claude/settings.json` allow rules for this project's work and gate
+scripts. Invoke them as `bash .claude/scripts/<prefix>-<name>.sh ...` from the
+repository root, without path or environment prefixes, so the rules match. STYLE LOCK
+`--lock` always asks and image generation keeps the default prompt.
+
 
 Prepare `.ai/gp/requests/<name>.json`: role, goal, tool, complexity, risk, context
 [{path,start,end}], write_paths, acceptance, stage, attempt, depth=1. `assign --run
 RUN --request FILE` reserves ownership and returns native dispatch settings plus
 the bounded prompt. **Actually pass model and reasoning to the native spawn tool**;
 mentioning them in text is insufficient. Use a fresh compact context rather than
-forking the full conversation. Claude passes a configured model or selects its own
-native model and records that choice. No cross-provider CLI bridge is required.
+forking the full conversation. Claude spawns the matching role agent and passes the
+descriptor model as the Agent tool `model` parameter (omitted only when null). If the
+host overrides it, record the observed model; a mismatch fails finish-assignment.
+No cross-provider CLI bridge is required.
 Respect runtime concurrency caps and tool-enforced read-only roles; do not bypass
 sandbox policy. When the tool cannot enforce narrow writes, audit the resulting
 diff against ownership. No nested delegation. Wait before dependent operations.
@@ -54,7 +71,9 @@ Call `finish-assignment` with the structured result, observed actual model/effor
 when supplied by the host (otherwise unknown), and observed usage (otherwise null).
 The result needs status DONE|FAILED|BLOCKED, changed_files, summary, findings,
 checks and blockers. Reviewers/verifiers warn and never fix. They receive the SPEC
-criteria independently, not only the developer's account. Do not silently replace
+criteria independently, not only the developer's account, plus CHANGED_FILES, the
+run diff when it fits the context budget and gate evidence paths; read-only roles
+have no shell. Do not silently replace
 an unavailable model. Fix tool/environment failures without model escalation;
 reasoning failures may escalate with the diff, failing example and tested hypotheses.
 Three attempts per stage by default; diagnose/replan when exhausted, preserving

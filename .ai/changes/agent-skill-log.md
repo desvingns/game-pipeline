@@ -419,3 +419,87 @@ Append-only. Format: `.ai/changes/README.md`.
 - change: Document the shared SPECS workflow and independent tool policies.
 - why: Deliver the approved universal backlog and model-budget workflow.
 - breaking: yes (legacy code boards migrate to SPECS through discovery)
+
+## 2026-09-12-gp008-001
+- kind: profile
+- target: templates/common/pipeline/model-policy.json
+- change: Set Claude tiers to Sonnet 5 medium / Sonnet 5 xhigh / Opus 5 xhigh and add role_tiers.
+- why: The user requested concrete Claude Code subagent models and reasoning effort.
+- breaking: no
+
+## 2026-09-12-gp008-002
+- kind: schema
+- target: schemas/work-model-policy.schema.json
+- change: Describe claude.mode (tiered|auto|native), tiers, role_tiers and orchestrator.
+- why: Validate the explicit Claude policy shape.
+- breaking: no
+
+## 2026-09-12-gp008-003
+- kind: script
+- target: templates/common/scripts/gp_work.py
+- change: Route Claude assignments to tier models and report the frontmatter-applied effort separately.
+- why: Claude Code accepts a per-spawn model but no per-spawn effort.
+- breaking: no (dispatch gains effort_source and tier_reasoning_effort for Claude)
+
+## 2026-09-12-gp008-004
+- kind: script
+- target: lib/claude.sh, lib/claude_agents.py, bootstrap.sh
+- change: Pin model and effort into Claude role frontmatter from the effective project policy.
+- why: Frontmatter is the only place Claude Code reads subagent effort.
+- breaking: no
+
+## 2026-09-12-gp008-005
+- kind: runbook
+- target: templates/common/commands/runtime/contract-work.md
+- change: Document Claude tiers, per-role effort pinning and spawn-time model passing.
+- why: The orchestrator must pass the model parameter and report applied effort.
+- breaking: no
+
+## 2026-09-12-gp008-006
+- kind: runbook
+- target: templates/common/commands/{{PREFIX}}.md
+- change: State the Claude Code tier models in the model-policy invariant.
+- why: Keep the router consistent with the explicit Claude policy.
+- breaking: no
+
+## 2026-09-12-gp008-007
+- kind: agent
+- target: templates/common/agents/{{PREFIX}}-backlog-discovery.md
+- change: Name the Claude simple tier (Sonnet 5 / medium) for discovery.
+- why: Replace the former native-choice wording.
+- breaking: no
+
+## 2026-09-12-gp008-008
+- kind: doc
+- target: templates/marketplace/SKILL.md.tmpl, templates/marketplace/gp.md.tmpl, templates/dimensions/3d/root/CLAUDE.md.tmpl
+- change: Document the explicit Claude Code tiers in marketplace and 3D root instructions.
+- why: Keep packaged guidance consistent with the policy.
+- breaking: no
+
+## 2026-09-13-gp008-009
+- kind: agent
+- target: templates/godot/agents/{{PREFIX}}-reviewer-godot.md, templates/godot/agents/{{PREFIX}}-verifier-godot.md
+- change: Remove Bash so Claude read-only roles are tool-enforced; read changed files, diff and evidence from the packet.
+- why: Read-only was not enforced for 2D reviewer/verifier in Claude Code.
+- breaking: no (the coordinator supplies diff and evidence paths)
+
+## 2026-09-13-gp008-010
+- kind: script
+- target: lib/claude.sh, lib/claude_settings.py, bootstrap.sh
+- change: Merge project-scoped .claude/settings.json allow rules for installed work and gate scripts.
+- why: Unattended Claude runs stalled on permission prompts for the pipeline's own scripts.
+- breaking: no (existing settings are preserved and archived before change)
+
+## 2026-09-13-gp008-011
+- kind: script
+- target: templates/common/scripts/gp_work.py, lib/claude_agents.py, templates/common/pipeline/model-policy.json
+- change: Add claude.max_turns and pin maxTurns in role frontmatter (runner: 8).
+- why: Bound the mechanical runner role.
+- breaking: no
+
+## 2026-09-13-gp008-012
+- kind: runbook
+- target: templates/common/commands/runtime/contract-work.md
+- change: Pass CHANGED_FILES, diff and evidence to shell-less read-only roles; document canonical script invocation for allow rules.
+- why: Keep reviewer independence and permission matching explicit.
+- breaking: no

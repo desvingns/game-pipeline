@@ -73,8 +73,9 @@ selector.
 - Gates report; agents do not claim a pass without the gate JSON. Reviewers warn
   and never fix.
 - Model policy is project-local: Codex Luna xhigh / Sol xhigh / Astra high;
-  Claude selects native models independently. Do not add a second baseline game,
-  paired implementation, model benchmark or experiment protocol.
+  Claude Code Sonnet 5 medium / Sonnet 5 xhigh / Opus 5 xhigh with effort pinned
+  per role agent. Do not add a second baseline game, paired implementation, model
+  benchmark or experiment protocol.
 
 The `--build` workflow delivers one game through the selected preset and ends
 with the package path, controls, gate evidence, visual review and known limits.

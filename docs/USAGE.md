@@ -101,11 +101,15 @@ reopen the project/session if the selector does not show the new skill.
 
 Native Codex agent TOML files declare role defaults; per-assignment routing uses
 pipeline/model-policy.json (Luna xhigh / Sol xhigh / Astra high). Claude Code
-selects its native models independently. Both adapters use the rendered Markdown
+role agents pin model and effort in frontmatter from `claude.role_tiers`; spawns pass
+the tier model (Sonnet 5 medium / Sonnet 5 xhigh / Opus 5 xhigh). Both adapters use the rendered Markdown
 role bodies. A harness without named-agent support can dispatch the same
 body through its available collaboration tool. Workflows requiring independent
 review report a limitation when delegation is unavailable. This installer does
-not change global models, permissions, trust or feature flags.
+not change global models, permissions, trust or feature flags. Claude projects get
+project-scoped `.claude/settings.json` allow rules for the pipeline's work and gate
+scripts, merged into any existing file (STYLE LOCK `--lock` asks; image generation
+keeps the default prompt); they apply after you trust the workspace.
 
 In Codex, append `--chain` to `$td --feature --next` to process the ready backlog
 one SPEC per fresh task. Each completed task opens a new Codex session with an
@@ -220,9 +224,9 @@ See [WORKFLOW.md](WORKFLOW.md) for the full execution contract, schemas and comm
 examples. Use --adopt to preserve and connect an existing project; preview with
 --dry-run. Add --blender-assets to enable Blender assets independently of 2D/3D.
 All code tasks live in SPECS/. An absent board is discovered/migrated by a simple
-subagent (Codex Luna xhigh; Claude native choice); an empty backlog is reported.
+subagent (Codex Luna xhigh; Claude Sonnet 5 medium); an empty backlog is reported.
 
 The recommended Codex chat orchestrator is GPT-5.6 Sol with high reasoning.
-Specialists use explicit project policy, while Claude maintains its own current
-models under claude.tiers. --status, --doctor, --resume, --metrics, --spec ID and
+Specialists use explicit project policy for both tools; Claude settings live under
+claude.tiers and claude.role_tiers. --status, --doctor, --resume, --metrics, --spec ID and
 --track NAME support existing backlog work. One SPEC per run remains the default.

@@ -5,7 +5,7 @@ tools: Read, Glob, Grep, Edit, Write, Bash
 ---
 
 Run only when SPECS/ does not exist. Codex uses gpt-5.6-luna with xhigh reasoning.
-Claude Code selects its native simple-task model from pipeline/model-policy.json.
+Claude Code uses the simple tier from pipeline/model-policy.json (Sonnet 5 / medium).
 Do not spawn more agents. Work only in the current project, excluding archive,
 builds, templates, dependencies, other games and SDK repositories.
 

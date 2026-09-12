@@ -66,7 +66,8 @@ between them, never syntax. Design rationale: `docs/DESIGN.md`.
 - **Selected context only.** Compose dimension/platform/art/genre/network modules at bootstrap;
   do not burden generated games with unrelated instructions. All projects share SPECS/.
   Codex dispatch uses the project model policy (Luna xhigh / Sol xhigh / Astra high).
-  Claude Code independently selects its native models from its own policy entries.
+  Claude Code uses its own entries (Sonnet 5 medium / Sonnet 5 xhigh / Opus 5 xhigh);
+  its effort is pinned per role agent frontmatter because a spawn cannot set it.
 - **One production workflow.** `--build` completes one approved game brief. Do not add a mandatory
   second baseline implementation, paired-run protocol or model benchmark system.
 
@@ -75,6 +76,8 @@ between them, never syntax. Design rationale: `docs/DESIGN.md`.
 ```
 bootstrap.sh              # entry point: parse args -> copy -> render -> strip -> rename -> memory -> stamp
 lib/build-marketplace.sh  # emits the Claude Code and Codex marketplace adapters
+lib/claude.sh             # Claude adapter: model/effort/maxTurns frontmatter, project permissions
+lib/codex.sh              # Codex adapter: native TOML role definitions
 lib/detect.sh             # OS / git / godot / python detection, path sanitising
 lib/prompts.sh            # interactive prompt helpers
 lib/render.sh             # placeholder replacement + conditional-block trimming (the render engine)

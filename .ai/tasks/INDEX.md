@@ -20,3 +20,4 @@ audit record, opened on demand.
 | gp-005 | Godot/Blender Windows FPS presets, production and execution gates | 2026-09-04 |
 | gp-006 | Dual-harness Game Pipeline marketplace | 2026-09-04 |
 | gp-007 | Unified backlog execution and model policy | 2026-09-12 |
+| gp-008 | Explicit Claude Code subagent models and effort | 2026-09-12 |

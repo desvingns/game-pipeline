@@ -23,7 +23,7 @@ netcode for the model. The model must build it against the approved brief.
 Then give `$fp --build <game brief>` (Claude: `/fp --build`). A natural whole-game
 request also selects build. It creates a staged plan/boards, then completes the
 brief through design, art, code, tests, polish and executable delivery. All roles
-follow the project model policy: Codex routes by complexity, while Claude chooses its native models. Image/audio providers remain explicit.
+follow the project model policy: Codex and Claude Code route by complexity; Claude pins effort per role agent. Image/audio providers remain explicit.
 
 An approved brief authorizes its implementation without repeated confirmations
 for routine steps. STYLE LOCK still waits for approval of the actual references.

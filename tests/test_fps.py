@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import py_compile
+import re
 import struct
 import subprocess
 import sys
@@ -96,13 +97,28 @@ class FPSTests(unittest.TestCase):
                     py_compile.compile(str(file), doraise=True)
             self.assertEqual(len(list((root / "agents").glob("*.md"))), 15)
             for file in (root / "agents").glob("*.md"):
-                self.assertNotIn("model:", file.read_text())
-                self.assertNotIn("Skeleton2D", file.read_text())
+                text = file.read_text()
+                self.assertNotIn("Skeleton2D", text)
+                if tool == "codex":
+                    self.assertNotIn("model:", text)
+                    continue
+                role = file.stem.removeprefix("fp-").removesuffix("-godot")
+                expected = {"art-prompter": ("claude-opus-5", "xhigh"), "animator": ("claude-opus-5", "xhigh"),
+                            "docs": ("claude-sonnet-5", "medium"), "runner": ("claude-sonnet-5", "medium"),
+                            "backlog-discovery": ("claude-sonnet-5", "medium")}.get(role, ("claude-sonnet-5", "xhigh"))
+                self.assertIn("\nmodel: %s\neffort: %s\n" % expected, text.split("---")[1])
+                if role in {"architect", "reviewer", "verifier"}:
+                    tools = re.search(r"^tools: (.*)$", text, re.M).group(1)
+                    self.assertLessEqual({name.strip() for name in tools.split(",")}, {"Read", "Glob", "Grep"})
             self.assertFalse((root / "scripts/fp-art-gen.sh").exists())
             for file in (root / "agents").glob("*.toml"):
                 self.assertIn(tomllib.loads(file.read_text())["model"], {"gpt-5.6-luna", "gpt-5.6-sol", "gpt-6-astra"})
             manifest = (root / "commands/fp-runtime/manifest.tsv").read_text()
             self.assertIn("build\t--build\tbuild.md", manifest)
+        allow = json.loads((self.projects["claude"] / ".claude/settings.json").read_text())["permissions"]["allow"]
+        for name in ("work", "fps-godot", "mesh-validate", "doctor"):
+            self.assertIn(f"Bash(bash .claude/scripts/fp-{name}.sh *)", allow)
+        self.assertFalse((self.project / ".claude/settings.json").exists())
         contract = json.loads((self.projects["claude"] / "pipeline/qa-contract.json").read_text())
         self.assertIn("two_process_peers", contract["scenarios"]["network"])
         self.assertNotIn("network", json.loads((self.project / "pipeline/qa-contract.json").read_text())["scenarios"])

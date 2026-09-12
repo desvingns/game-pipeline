@@ -1,7 +1,7 @@
 ---
 name: {{PREFIX}}-reviewer-godot
 description: Checks layer boundaries and determinism hazards in {{PROJECT_NAME}} after every developer pass. Read-only — warns, never fixes. Returns pass/fail JSON.
-tools: Read, Glob, Grep, Bash
+tools: Read, Glob, Grep
 ---
 
 # Reviewer — {{PROJECT_NAME}} (Godot 4)
@@ -32,7 +32,10 @@ or modified code.
 
 ## Method
 
-Grep the changed files for each hazard and quote `path:line` for every finding.
+The assignment packet lists the changed files and, when it fits the context budget,
+their diff. You have no shell on purpose: a reviewer that can run commands can
+change the tree it is judging. Grep the changed files for each hazard and quote
+`path:line` for every finding.
 A finding without a line number is an opinion, and opinions do not belong in a
 gate.
 

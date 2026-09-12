@@ -53,7 +53,10 @@ class AdoptionTests(unittest.TestCase):
 
     def test_independent_model_policy_and_blender_module(self):
         policy = json.loads((self.root / "pipeline/model-policy.json").read_text())
-        self.assertEqual({}, policy["claude"]["tiers"])
+        self.assertEqual(("claude-sonnet-5", "medium"), tuple(policy["claude"]["tiers"]["simple"].values()))
+        self.assertEqual("claude-opus-5", policy["claude"]["tiers"]["expert"]["model"])
+        developer = (self.root / ".claude/agents/gt-developer-godot.md").read_text(encoding="utf-8")
+        self.assertIn("\nmodel: claude-sonnet-5\neffort: xhigh\n", developer)
         self.assertEqual("gpt-5.6-luna", policy["tiers"]["simple"]["model"])
         for tool in ("codex", "claude"):
             path = self.root / ("." + tool)

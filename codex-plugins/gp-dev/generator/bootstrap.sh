@@ -19,6 +19,7 @@ LIB_DIR="$TEMPLATES_ROOT/lib"
 # shellcheck source=lib/render.sh
 . "$LIB_DIR/render.sh"
 . "$LIB_DIR/codex.sh"
+. "$LIB_DIR/claude.sh"
 
 # ----- parse args --------------------------------------------------------
 ENGINE="godot"
@@ -466,6 +467,12 @@ done
 
 # Native adapters are derived from rendered, tool-neutral role bodies.
 if [ "$TOOL" = codex ]; then emit_codex_agents "$AGENT_DIR/agents"; fi
+# A preserved project policy, not the template, decides the pinned Claude tiers.
+if [ "$TOOL" = claude ]; then
+    CLAUDE_POLICY_ROOT="$STAGE/generated"
+    [ ! -f "$DEST_ROOT/pipeline/model-policy.json" ] || CLAUDE_POLICY_ROOT="$DEST_ROOT"
+    emit_claude_agents "$AGENT_DIR/agents" "$PREFIX" "$ENGINE" "$AGENT_DIR/scripts/gp_work.py" "$CLAUDE_POLICY_ROOT"
+fi
 for f in "$AGENT_DIR"/scripts/*.sh; do chmod +x "$f"; done
 
 # Concrete reviewable upgrade diff, without deploying generated runtime files.
@@ -505,6 +512,8 @@ done < <(find . -type f -print0)
 # Empty working directories are part of the bootstrap contract too.
 while IFS= read -r -d '' d; do mkdir -p "$DEST_ROOT/${d#./}"; done < <(find . -type d -print0)
 cd "$DEST_ROOT"
+# Project-scoped allow rules for the pipeline's own scripts: merged, never replaced.
+if [ "$TOOL" = claude ]; then merge_claude_settings "$DEST_ROOT" "$PREFIX" "$STAGE/previous"; fi
 GP_WORK_SOURCE="$DEST_ROOT/$AGENT_DIR/scripts/gp_work.py"
 GP_WORK_TARGET="$DEST_ROOT"
 if command -v cygpath >/dev/null 2>&1; then

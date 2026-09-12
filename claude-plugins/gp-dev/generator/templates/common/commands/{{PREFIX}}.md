@@ -89,9 +89,10 @@ Unknown or conflicting selectors are an error: show this table and ask the user 
 - **Gates report, agents do not.** A pass claimed without the gate's JSON line is not a pass.
 - **Reviewers warn, they never fix.**
 - **Use the project model policy.** Codex routes bounded assignments to Luna xhigh,
-  Sol xhigh or Astra high. Claude Code independently selects its native models.
-  Actual spawn settings must match the assignment; report unavailable models.
-  Keep image/audio providers explicit. Load contract-work for delegation and boards.
+  Sol xhigh or Astra high; Claude Code to Sonnet 5 medium, Sonnet 5 xhigh or Opus 5
+  xhigh (effort pinned per role agent). Actual spawn settings must match the
+  assignment; report unavailable models. Keep image/audio providers explicit. Load
+  contract-work for delegation and boards.
 
 Directory names in the default layer examples are mapped through
 pipeline/project.json for existing projects. Keep the engine-free deterministic

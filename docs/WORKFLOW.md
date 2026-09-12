@@ -39,7 +39,7 @@ without deploying it. `--dry-run` prints the installation outline without writes
 Upgrades archive replaced pipeline files and preserve project configuration.
 
 If SPECS is absent, the skill **first delegates backlog discovery**. In Codex that
-agent is Luna xhigh. Claude uses its native simple-task model. It searches only the
+agent is Luna xhigh. Claude uses its simple tier (Sonnet 5 / medium). It searches only the
 current project, inspects candidate cards/checklists, and migrates the real backlog.
 It retains original content, IDs, acceptance, status and relative links. An empty
 backlog is reported explicitly. Direct bootstrap leaves the board absent until
@@ -67,11 +67,37 @@ novel architecture or hard debugging, Astra high is a reasonable primary choice.
 Simple-task subagents retain the user's requested xhigh setting. Savings are
 measured across successful completion including retries; no percentage is promised.
 
-Claude Code has independent settings under `claude`: `mode: auto`, initially empty
-`tiers` and `orchestrator`. Claude chooses its current native models. It can fill
-`claude.tiers.simple|complex|expert` with `{model, reasoning}` entries when desired.
-There is no forced GPT model, guessed Anthropic ID, or Codex CLI bridge in Claude.
-The same board, roles, schemas and evidence protocol apply to both tools.
+Claude Code has independent settings under `claude` (`mode: tiered`):
+
+| Claude tier | Model | Effort | Examples |
+|---|---|---|---|
+| simple | claude-sonnet-5 | medium | bounded fixes, small tests, discovery, close-out text |
+| complex | claude-sonnet-5 | xhigh | cross-layer features, integrations, substantive review |
+| expert | claude-opus-5 | xhigh | Blender, new algorithms/codecs, critical lifecycle/concurrency |
+
+Claude Code accepts a model per spawn but reads effort only from agent frontmatter.
+Bootstrap therefore pins `model` and `effort` into every `.claude/agents/*.md` role
+from `claude.role_tiers` (default complex; docs, runner and backlog-discovery simple;
+art-prompter and animator expert), using a preserved project policy when present.
+The descriptor passes the tier model and reports `reasoning_effort` as the effort that
+actually applies, with `tier_reasoning_effort` and `effort_source` alongside. A simple
+developer assignment therefore runs Sonnet 5 at the developer's xhigh: a deliberate
+trade-off against per-tier agent copies. Reasoning checks stay strict against the
+applied effort. Full model IDs are used because the `sonnet` alias resolves to older
+models on Bedrock, Vertex and Foundry. Missing entries, including 1.1 `mode: auto`
+policies with empty tiers, use these defaults; `mode: native` restores session-selected
+models. Re-run bootstrap `--force` after editing Claude tiers. There is no GPT model
+or Codex CLI bridge in Claude. The same board, roles, schemas and evidence protocol
+apply to both tools.
+
+Claude read-only roles (architect, reviewer, verifier) have only Read, Glob and Grep,
+so independence is tool-enforced as in the Codex read-only sandbox; the coordinator
+passes changed files, the run diff and evidence paths. `claude.max_turns` pins
+`maxTurns` (runner: 8). Bootstrap merges project-scoped `.claude/settings.json` allow
+rules for the installed work and gate scripts into any existing file, archiving the
+previous copy. STYLE LOCK `--lock` always asks and image generation keeps the default
+prompt. The rules apply after workspace trust and match only
+`bash .claude/scripts/<prefix>-<name>.sh ...` invoked from the repository root.
 
 The runtime selects per subtask, not only by profession or S/M card size. Expert
 risk triggers bypass cheaper failed attempts. Review can set `review_floor`.

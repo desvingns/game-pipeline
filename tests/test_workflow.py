@@ -106,18 +106,53 @@ class WorkflowTests(unittest.TestCase):
         path.write_text(work.read(path).replace("behavior works", "behavior changes"), encoding="utf-8")
         self.assert_error("acceptance_changed", work.resume, self.root, run_id)
 
-    def test_codex_exact_tiers_and_claude_native_policy(self):
+    def test_codex_exact_tiers_and_claude_policy(self):
         for tier, model, effort in [("simple", "gpt-5.6-luna", "xhigh"), ("complex", "gpt-5.6-sol", "xhigh"), ("expert", "gpt-6-astra", "high")]:
             selected = work.route(self.root, {"complexity": tier})
             self.assertEqual((model, effort), (selected["model"], selected["reasoning"]))
         self.assertEqual("expert", work.route(self.root, {"risk": {"blender": True}})["tier"])
         self.assertEqual("complex", work.route(self.root, {"attempt": 2, "failure_kind": "reasoning"})["tier"])
         self.assert_error("external_blocker", work.route, self.root, {"attempt": 2, "failure_kind": "environment"})
-        self.assertIsNone(work.route(self.root, {"tool": "claude"})["model"])
+        # The spawn carries the tier model; effort is the developer agent's pinned xhigh.
+        for tier, model, effort in [("simple", "claude-sonnet-5", "medium"), ("complex", "claude-sonnet-5", "xhigh"), ("expert", "claude-opus-5", "xhigh")]:
+            selected = work.route(self.root, {"tool": "claude", "role": "developer", "complexity": tier})
+            self.assertEqual((model, effort, "xhigh", "agent-frontmatter"),
+                             (selected["model"], selected["tier_reasoning"], selected["reasoning"], selected["effort_source"]))
+        docs = work.route(self.root, {"tool": "claude", "role": "docs", "complexity": "expert"})
+        self.assertEqual(("claude-opus-5", "medium", "xhigh"), (docs["model"], docs["reasoning"], docs["tier_reasoning"]))
+        self.assertTrue(any("no per-spawn effort" in reason for reason in docs["reasons"]))
         config = work.policy(self.root)
-        config["claude"]["tiers"]["simple"] = {"model": "native-test-model", "reasoning": "high"}
+        config["claude"] = {"mode": "auto", "tiers": {}, "orchestrator": {}}
         self.put("pipeline/model-policy.json", config)
-        self.assertEqual("native-test-model", work.route(self.root, {"tool": "claude"})["model"])
+        legacy = work.route(self.root, {"tool": "claude", "role": "developer"})
+        self.assertEqual(("claude-sonnet-5", "xhigh"), (legacy["model"], legacy["reasoning"]))
+        config["claude"]["tiers"]["simple"] = {"model": "native-test-model", "reasoning": "high"}
+        config["claude"]["role_tiers"] = {"developer": "simple"}
+        self.put("pipeline/model-policy.json", config)
+        explicit = work.route(self.root, {"tool": "claude", "role": "developer"})
+        self.assertEqual(("native-test-model", "high", "high"), (explicit["model"], explicit["reasoning"], explicit["tier_reasoning"]))
+        config["claude"]["mode"] = "native"
+        self.put("pipeline/model-policy.json", config)
+        native = work.route(self.root, {"tool": "claude"})
+        self.assertEqual((None, None, "session"), (native["model"], native["reasoning"], native["effort_source"]))
+        for broken in ({"tiers": {"simple": {"model": "m", "reasoning": "extreme"}}}, {"role_tiers": {"docs": "huge"}}, {"max_turns": {"runner": 0}}):
+            self.put("pipeline/model-policy.json", config | {"claude": broken})
+            self.assert_error("policy_invalid", work.policy, self.root)
+        self.put("pipeline/model-policy.json", config | {"claude": {"mode": "guess"}})
+        self.assert_error("schema_invalid", work.policy, self.root)
+
+    def test_claude_dispatch_reports_pinned_effort_strictly(self):
+        run_id = self.run_start()
+        a = work.assign(self.root, run_id, self.request() | {"tool": "claude"})
+        d = a["dispatch"]
+        self.assertEqual(("claude", "claude-sonnet-5", "xhigh", "medium", "agent-frontmatter"),
+                         (d["tool"], d["model"], d["reasoning_effort"], d["tier_reasoning_effort"], d["effort_source"]))
+        self.put("domain/rule.py", "VALUE = 2\n")
+        result = {"status": "DONE", "summary": "Changed", "changed_files": ["domain/rule.py"], "findings": [], "checks": [],
+                  "blockers": [], "actual_model": "claude-sonnet-5", "actual_reasoning": "medium"}
+        self.assert_error("reasoning_mismatch", work.finish_assignment, self.root, a["assignment_id"], result)
+        result["actual_reasoning"] = "xhigh"
+        self.assertEqual("DONE", work.finish_assignment(self.root, a["assignment_id"], result)["status"])
 
     def test_context_budget_and_explicit_allowlist(self):
         self.card()
@@ -261,7 +296,8 @@ class MigrationTests(unittest.TestCase):
 
     def test_absence_and_empty_board(self):
         self.assertEqual("gpt-5.6-luna", work.discover(self.root)["dispatch"]["model"])
-        self.assertIsNone(work.discover(self.root, "claude")["dispatch"]["model"])
+        claude = work.discover(self.root, "claude")["dispatch"]
+        self.assertEqual(("claude-sonnet-5", "medium", "medium"), (claude["model"], claude["reasoning"], claude["tier_reasoning"]))
         result = work.migrate(self.root, {"version": 1, "moves": []}, True)
         self.assertEqual("backlog_empty", result["status"])
         self.assertEqual([], work.board(self.root))

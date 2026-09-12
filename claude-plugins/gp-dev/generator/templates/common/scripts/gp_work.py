@@ -27,9 +27,20 @@ EXCLUDE = {".git", ".godot", "archive", "node_modules", "__pycache__", "build", 
 ID = r"[A-Za-z][A-Za-z0-9_]*-?\d+[A-Za-z0-9_-]*"
 READ_ONLY = {"reviewer", "verifier", "architect", "explorer"}
 TIERS = ["simple", "complex", "expert"]
+EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 DEFAULT_POLICY = {
     "version": 1, "mode": "tiered",
-    "claude": {"mode": "auto", "tiers": {}, "orchestrator": {}, "notes": "Claude Code selects its current native models; configure tiers here when known"},
+    "claude": {
+        "mode": "tiered",
+        "tiers": {
+            "simple": {"model": "claude-sonnet-5", "reasoning": "medium"},
+            "complex": {"model": "claude-sonnet-5", "reasoning": "xhigh"},
+            "expert": {"model": "claude-opus-5", "reasoning": "xhigh"}},
+        "role_tiers": {"default": "complex", "backlog-discovery": "simple", "docs": "simple", "runner": "simple",
+                       "art-prompter": "expert", "animator": "expert"},
+        "max_turns": {"runner": 8},
+        "orchestrator": {},
+        "notes": "Spawns pass the tier model; effort comes from each role agent's frontmatter (role_tiers) because Claude Code has no per-spawn effort. mode native restores session-selected models"},
     "orchestrator": {"model": "gpt-5.6-sol", "reasoning": "high"},
     "tiers": {
         "simple": {"model": "gpt-5.6-luna", "reasoning": "xhigh"},
@@ -438,12 +449,46 @@ def policy(root):
         fail("policy_invalid", "Expected version 1 and mode tiered|inherit")
     for tier in TIERS:
         entry = value.get("tiers", {}).get(tier, {})
-        if not isinstance(entry.get("model"), str) or entry.get("reasoning") not in {"low", "medium", "high", "xhigh", "max"}:
+        if not isinstance(entry.get("model"), str) or entry.get("reasoning") not in EFFORTS:
             fail("policy_invalid", tier)
     for field in ("max_concurrent_agents", "max_attempts_per_stage", "max_delegation_depth", "context_chars"):
         if type(value.get(field)) != int or value[field] < 1:
             fail("policy_invalid", field)
+    native = value.get("claude", {})
+    if not isinstance(native, dict) or native.get("mode", "tiered") not in {"tiered", "auto", "native"}:
+        fail("policy_invalid", "claude.mode must be tiered|auto|native")
+    for tier, entry in native.get("tiers", {}).items():
+        if tier not in TIERS or not isinstance(entry, dict) or not isinstance(entry.get("model"), str) or entry.get("reasoning") not in EFFORTS:
+            fail("policy_invalid", "claude.tiers." + tier)
+    for role, tier in native.get("role_tiers", {}).items():
+        if tier not in TIERS:
+            fail("policy_invalid", "claude.role_tiers." + role)
+    for role, turns in native.get("max_turns", {}).items():
+        if type(turns) != int or turns < 1:
+            fail("policy_invalid", "claude.max_turns." + role)
     return value
+
+
+def claude_policy(p):
+    """Resolve Claude Code settings; absent entries, including legacy empty auto policies, use generator defaults."""
+    native, defaults = p.get("claude") or {}, DEFAULT_POLICY["claude"]
+    return {"mode": native.get("mode", "tiered"),
+            "tiers": {tier: native.get("tiers", {}).get(tier) or defaults["tiers"][tier] for tier in TIERS},
+            "role_tiers": {**defaults["role_tiers"], **native.get("role_tiers", {})},
+            "max_turns": {**defaults["max_turns"], **native.get("max_turns", {})}}
+
+
+def claude_role_max_turns(p, role):
+    """Optional maxTurns cap pinned in a Claude role agent's frontmatter."""
+    return claude_policy(p)["max_turns"].get(role)
+
+
+def claude_role_setting(p, role):
+    """Model and effort pinned in a Claude role agent's frontmatter; None when the session selects them."""
+    native = claude_policy(p)
+    if native["mode"] == "native":
+        return None
+    return native["tiers"][native["role_tiers"].get(role, native["role_tiers"]["default"])]
 
 
 def route(root, request):
@@ -483,10 +528,19 @@ def route(root, request):
     if tool not in {"claude", "codex"}:
         fail("assignment_invalid", "tool must be claude|codex")
     if tool == "claude":
-        native = p.get("claude", {"mode": "auto", "tiers": {}})
-        entry = native.get("tiers", {}).get(tier, {})
-        model = {"model": entry.get("model"), "reasoning": entry.get("reasoning")}
-        reasons.append("Claude Code selects its native model when this tier is unconfigured")
+        # Claude Code accepts a per-spawn model, but effort only from the role agent's
+        # frontmatter. Report the effort that actually applies, not the tier's wish.
+        pinned = claude_role_setting(p, role)
+        if pinned is None:
+            model = {"model": None, "reasoning": None, "tier_reasoning": None, "effort_source": "session"}
+            reasons.append("Claude native mode: the session selects model and effort")
+        else:
+            entry = claude_policy(p)["tiers"][tier]
+            model = {"model": entry["model"], "reasoning": pinned["reasoning"],
+                     "tier_reasoning": entry["reasoning"], "effort_source": "agent-frontmatter"}
+            if pinned["reasoning"] != entry["reasoning"]:
+                reasons.append(f"Claude Code has no per-spawn effort: the {role} agent frontmatter applies "
+                               f"{pinned['reasoning']} instead of tier effort {entry['reasoning']}")
     elif p["mode"] == "inherit" and role != "backlog-discovery":
         model = {"model": None, "reasoning": None}
     else:
@@ -807,11 +861,14 @@ def dispatch(root, key):
               f"Prior failure and hypotheses: {json.dumps(request.get('repair_context', {}))}\n"
               "Return one JSON object with status, summary, changed_files, findings, checks, blockers. "
               "Do not copy full successful tool logs.\n\n" + a["context"]["text"])
-    return {"tool": selection.get("tool", request.get("tool", "codex")), "model": selection.get("model"),
-            "workspace": str(repository_root(root, request.get("repository", "project"))),
-            "reasoning_effort": selection.get("reasoning"), "sandbox": selection.get("sandbox", "read-only"),
-            "fork_history": False, "prompt": prompt,
-            "instructions": "Use native subagent tools with these explicit settings; Claude selects and records a native model when null. A prompt mentioning a model alone does not select it. If unavailable, report model_unavailable; never silently substitute."}
+    value = {"tool": selection.get("tool", request.get("tool", "codex")), "model": selection.get("model"),
+             "workspace": str(repository_root(root, request.get("repository", "project"))),
+             "reasoning_effort": selection.get("reasoning"), "sandbox": selection.get("sandbox", "read-only"),
+             "fork_history": False, "prompt": prompt,
+             "instructions": "Use native subagent tools with these explicit settings. Codex passes model and reasoning_effort to the spawn tool. Claude Code spawns the named role agent and passes model as the Agent tool model parameter; reasoning_effort is applied by that agent's frontmatter and cannot be changed per spawn; null means the session selects. A prompt mentioning a model alone does not select it. If unavailable, report model_unavailable; never silently substitute."}
+    if value["tool"] == "claude":
+        value.update(effort_source=selection.get("effort_source"), tier_reasoning_effort=selection.get("tier_reasoning"))
+    return value
 
 
 def finish_assignment(root, key, result):
@@ -1131,7 +1188,7 @@ def estimate_art(request):
     return {"pass": True, "counts": values, "raster_outputs": total, "meshes": request.get("meshes", 0),
             "rigs": request.get("rigs", 0), "clips": request.get("clips", 0),
             "production_requires": ["approved reference sheet", "style/projection profile", "provenance", "runtime visual check"],
-            "model": "Astra high for Codex Blender recipes; native expert tier for Claude; repeat builds use scripts"}
+            "model": "Astra high for Codex Blender recipes; Claude expert tier (Opus 5 xhigh by default); repeat builds use scripts"}
 
 
 def upgrade_preview(root, generated):
