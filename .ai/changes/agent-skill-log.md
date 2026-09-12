@@ -133,6 +133,41 @@ Append-only. Format: `.ai/changes/README.md`.
 - why: Deliver the approved universal backlog and model-budget workflow.
 - breaking: yes (legacy code boards migrate to SPECS through discovery)
 
+## 2026-09-12-gp007-chain-001
+- kind: runbook
+- target: templates/marketplace/SKILL.md.tmpl
+- change: Define Codex-only sequential chain sessions with empty transcripts and explicit stop states.
+- why: Continue approved ready SPECS one per fresh Codex task.
+- breaking: no
+
+## 2026-09-12-gp007-chain-002
+- kind: runbook
+- target: templates/marketplace/gp.md.tmpl
+- change: Expose the --chain modifier in the marketplace router and reject it in Claude Code.
+- why: Make the requested chain invocation discoverable in the marketplace command.
+- breaking: no
+
+## 2026-09-12-gp007-chain-003
+- kind: runbook
+- target: templates/common/commands/runtime/contract-work.md
+- change: Specify native create_thread, local project targeting, duplicate guards and termination conditions.
+- why: Keep chain behavior consistent in generated projects and marketplace fallbacks.
+- breaking: no
+
+## 2026-09-12-gp007-chain-004
+- kind: doc
+- target: docs/WORKFLOW.md
+- change: Document sequential Codex chain usage and its boundaries against --batch.
+- why: Give users an auditable command contract and recovery expectations.
+- breaking: no
+
+## 2026-09-12-gp007-chain-005
+- kind: script
+- target: tests/test_marketplace.py
+- change: Verify Codex retains create_thread while Claude receives only the unsupported result.
+- why: Catch accidental cross-tool chain leakage during package rendering.
+- breaking: no
+
 ## 2026-09-12-gp007-002
 - kind: script
 - target: lib/build-marketplace.sh

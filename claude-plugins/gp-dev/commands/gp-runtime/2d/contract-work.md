@@ -21,6 +21,13 @@ Reserve with `claim --spec ID --owner <session-id>` before writing. One SPEC per
 run. Optional `--batch N` requires user-authorized batch execution; keep N bounded,
 stop at a human gate/blocker, and preserve each project's session restrictions.
 
+
+## Chain modifier
+
+`--chain` is unsupported in Claude Code. Report `chain_unsupported_in_claude`
+and stop; this modifier opens successor tasks only through Codex.
+
+
 ## Models and native dispatch
 
 Read `pipeline/model-policy.json` once. Codex: simple Luna xhigh, complex Sol xhigh,

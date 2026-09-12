@@ -3,9 +3,13 @@
 Date: 2026-09-12. Host: Windows, Git Bash, Python. Fixtures and full logs are
 retained under ignored `out/`; no production game implementation was started.
 
+The follow-up 1.1.0 marketplace change adds Codex chain mode and was validated by
+the marketplace contract test and package parity check below.
+
 Result: all 50 smoke tests passed, plus 18 real engine integration checks.
-Marketplace parity matched all 290 checked source copies. Both installed native
-plugins were updated to 1.0.0 and compared byte-for-byte with the built packages.
+Marketplace parity matched all 290 checked source copies. The built marketplace
+packages are version 1.1.0; the previously installed 1.0.0 packages remain
+archived until the new version is installed and the host session is restarted.
 
 ## Coverage
 
@@ -50,6 +54,11 @@ Live Claude model selection, complete native multi-agent feature implementation,
 Android device execution and live image-provider generation were not exercised
 in this release validation. Claude's native policy remains intentionally editable.
 No subscription savings percentage, hidden usage or API cost is asserted.
+
+Chain-mode validation confirms the Codex marketplace skill and runtime contain
+`create_thread` and the empty-transcript successor contract, while Claude's
+rendered package contains only `chain_unsupported_in_claude`. The 1.1.0 full smoke
+run is recorded in `out/smoke-chain-v110.log`.
 
 Final regression output: `out/smoke-v1-final.log`. Real engine output:
 `out/real-integration-validation.log`; retained scene/build artifacts are named

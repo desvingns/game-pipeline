@@ -12,6 +12,13 @@ Natural language such as “implement the next ready backlog task” selects
 `--status`, `--doctor`, `--resume RUN`, `--metrics`. One task is the default;
 `--batch N` is an explicitly requested bounded sequence and respects project gates.
 
+Codex also supports `--feature --next --chain`: after each verified DONE, it
+opens a fresh Codex task in the same saved project with an empty transcript and
+repeats the command. The chain stops at an empty or not-ready board, a human gate,
+REVIEW/BLOCKED/FAILED result, or unavailable task creation. It is sequential and
+does not replace the bounded `--batch` contract. Claude Code reports that this
+modifier is unsupported because it selects its own native runtime.
+
 Connect an existing game from its directory:
 
 ```bash
@@ -95,6 +102,7 @@ Each command produces exactly one JSON line. Failure exits nonzero with an
 | `discover --tool codex` | List candidate sources for the discovery agent; no migration or model call |
 | `migrate --plan FILE [--apply]` | Validate/apply a hash-bound move plan; replay interrupted journal |
 | `next [--track H] [--spec H12]` | Select the next dependency-ready card |
+| `--feature --next --chain` | Codex: finish one card, create a fresh task, and continue until the board stops |
 | `status`, `consistency`, `sync-index` | Inspect readiness, detect inconsistencies, synchronize the index |
 | `claim --spec ID --owner SESSION` | Reserve before any implementation writes |
 | `claim ... --recover-stale` | Recover the same expired run, preserving its checkpoints |

@@ -107,6 +107,12 @@ body through its available collaboration tool. Workflows requiring independent
 review report a limitation when delegation is unavailable. This installer does
 not change global models, permissions, trust or feature flags.
 
+In Codex, append `--chain` to `$td --feature --next` to process the ready backlog
+one SPEC per fresh task. Each completed task opens a new Codex session with an
+empty transcript and repeats the command. The chain stops on an empty/not-ready
+board, a human gate, failed or blocked work, or unavailable session creation. The
+same modifier is intentionally unsupported in Claude Code.
+
 The `codex-native` shell adapter renders a provider-neutral prompt. The host agent
 uses its available image tool, then `--register <returned-path> --attempt <n>` writes
 provenance. If no native image tool is available, the external-file path remains

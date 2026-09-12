@@ -102,6 +102,12 @@ render_markdown() {
         strip_tool_block "$dst" claude
         strip_tool_markers "$dst" codex
     fi
+    # Conditional blocks can leave several empty lines at EOF in one adapter.
+    # Keep generated Markdown stable and avoid an otherwise meaningless blank
+    # line being reported as a package diff/error by git checks.
+    local tmp="${dst}.tmp.$$"
+    awk '{ lines[NR]=$0 } END { n=NR; while (n > 0 && lines[n] == "") n--; for (i=1; i<=n; i++) print lines[i] }' "$dst" > "$tmp"
+    mv "$tmp" "$dst"
 }
 
 write_plugin_manifest() {

@@ -65,6 +65,21 @@ class MarketplaceTests(unittest.TestCase):
             self.assertTrue((generator / "profiles/presets/3d-fps-windows.json").is_file())
             self.assertTrue((generator / "templates/dimensions/3d/scripts/gp_3d.py").is_file())
 
+    def test_chain_is_codex_marketplace_behavior(self):
+        codex = (ROOT / "codex-plugins/gp-dev/skills/gp-dev/SKILL.md").read_text(encoding="utf-8")
+        router = (ROOT / "codex-plugins/gp-dev/skills/gp-dev/references/runtime/router.md").read_text(encoding="utf-8")
+        claude = (ROOT / "claude-plugins/gp-dev/skills/gp-dev/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("--feature --next --chain", codex)
+        self.assertIn("create_thread", codex)
+        self.assertIn("empty transcript", codex)
+        self.assertIn("--chain", router)
+        self.assertIn("chain_unsupported_in_claude", claude)
+        self.assertNotIn("create_thread", claude)
+        claude_runtime = (ROOT / "claude-plugins/gp-dev/commands/gp-runtime/2d/contract-work.md").read_text(encoding="utf-8")
+        codex_runtime = (ROOT / "codex-plugins/gp-dev/skills/gp-dev/references/runtime/2d/contract-work.md").read_text(encoding="utf-8")
+        self.assertIn("create_thread", codex_runtime)
+        self.assertNotIn("create_thread", claude_runtime)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -1,6 +1,6 @@
 ---
 description: Game Pipeline orchestrator (/gp) for Godot 2D Android and Godot 3D Windows FPS projects.
-argument-hint: --build|--discuss|--style|--design|--level|--art|--animate|--feature|--balance|--gates <args>
+argument-hint: --build|--discuss|--style|--design|--level|--art|--animate|--feature|--balance|--gates [--next] [--chain] <args>
 ---
 
 Game Pipeline is the front door for the current game repository. It bootstraps a
@@ -57,6 +57,9 @@ selector.
 
 - `--next` selects the next item from the relevant board for `--feature` or
   `--art`.
+
+- `--chain` is Codex-only and is rejected by Claude Code.
+
 - `--unattended` allows advisory defaults but never approves STYLE LOCK, scope
   changes or outward actions that still require a human gate.
 - The selected architecture is binding: 2D keeps engine-free deterministic

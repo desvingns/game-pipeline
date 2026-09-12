@@ -83,10 +83,21 @@ Unassigned — follow-up game vertical slice and engine harness integration.
   bounded context/ownership, recovery, evidence, fresh reviews, usage and previews.
 - All 50 smoke tests and 18 real Godot/Blender integration checks pass; real Luna
   discovery passed. Package parity checks 290 files. See docs/VALIDATION-1.0.md.
-- Both personal plugins are installed at 1.0.0, with prior installs archived.
-  Claude requires restart; use a fresh Codex session to ensure refreshed guidance.
+- Both marketplace plugins are installed at 1.1.0. Claude requires restart; use a
+  fresh Codex session to ensure refreshed guidance.
 - Ground Truth was inspected read-only; no H12 implementation or runtime deployment
   occurred there. Existing games adopt/upgrade the generated runtime when requested.
 - Final independent reviewer follow-up hit the host usage limit; previous findings
   were fixed. Live full-feature multi-agent, Claude dispatch, Android and image
   provider validation remain separate integration work, not claimed by fixtures.
+
+## Update — 2026-09-12: v1.1 Codex chain mode
+
+- Added marketplace `gp --feature --next --chain`: after one verified DONE, the
+  Codex orchestrator checks the board and opens exactly one successor task with
+  `create_thread`, local project environment and an empty transcript.
+- Chain stops on an empty/not-ready board, REVIEW/BLOCKED/FAILED, human gate or
+  unavailable project/task mapping. It never forks, sends a follow-up, changes
+  model settings or bridges through the Codex CLI. Claude reports unsupported.
+- Marketplace, source-parity and full smoke tests pass; both installed plugins
+  are updated to 1.1.0. See docs/WORKFLOW.md and docs/USAGE.md.

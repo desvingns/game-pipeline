@@ -21,6 +21,33 @@ Reserve with `claim --spec ID --owner <session-id>` before writing. One SPEC per
 run. Optional `--batch N` requires user-authorized batch execution; keep N bounded,
 stop at a human gate/blocker, and preserve each project's session restrictions.
 
+<!-- tool:codex -->
+## Sequential Codex chain
+
+`--chain` is an explicit Codex modifier for `--feature --next`. It is a sequence
+of single-SPEC runs, not a larger batch and not permission to weaken gates. The
+current task must reach DONE with fresh evidence. Then query `work.sh status` and
+continue only when a dependency-ready card exists. REVIEW, BLOCKED, FAILED,
+`no_ready_tasks`, `backlog_empty`, a human gate, or an unavailable native task
+operation ends the chain and is reported.
+
+For the successor, use the native Codex app `list_projects` to match the current
+saved project and `create_thread` with its local environment. Pass only
+`Run gp --feature --next --chain in the current project.` plus a chain id and
+iteration metadata. Omit model/reasoning overrides. This creates an empty
+transcript while leaving the completed working tree available. Never fork the
+current task, send a follow-up to it, or invoke a Codex CLI bridge. A completed
+run may have at most one successor; the next task's claim is the duplicate guard.
+Claude Code does not open Codex tasks and must return
+`chain_unsupported_in_claude` when `--chain` is supplied.
+<!-- /tool:codex -->
+<!-- tool:claude -->
+## Chain modifier
+
+`--chain` is unsupported in Claude Code. Report `chain_unsupported_in_claude`
+and stop; this modifier opens successor tasks only through Codex.
+<!-- /tool:claude -->
+
 ## Models and native dispatch
 
 Read `pipeline/model-policy.json` once. Codex: simple Luna xhigh, complex Sol xhigh,

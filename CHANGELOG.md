@@ -4,6 +4,15 @@ All notable changes to game-pipeline. SemVer: PATCH = wording, MINOR = additive
 (new agents, new profiles, new optional sections), MAJOR = renames or JSON-shape
 changes.
 
+## [1.1.0] — 2026-09-12
+
+### Added
+
+- Codex marketplace `--feature --next --chain` mode. Each verified SPEC is
+  followed by one fresh Codex task in the same saved project with an empty
+  transcript; the chain stops on an empty/not-ready board, blockers, human gates
+  or unavailable task creation. Claude Code reports the modifier as unsupported.
+
 ## [1.0.0] — 2026-09-12
 
 ### Changed

@@ -72,4 +72,27 @@ otherwise. Delegate bounded tasks using pipeline/model-policy.json: Codex Luna x
 Sol xhigh, Astra high by difficulty; Claude models are independently selected and
 can be updated in claude.tiers. Keep the primary chat model unchanged; recommended
 Codex orchestrator is Sol high. Use the shared script for claims, ownership,
-checkpoints, actual gate evidence and close-out. See docs/WORKFLOW.md in the generator.
+ checkpoints, actual gate evidence and close-out. See docs/WORKFLOW.md in the generator.
+
+<!-- tool:codex -->
+## Codex chain mode
+
+`--chain` is valid only with `--feature --next --chain`. It runs one SPEC per
+fresh Codex task: complete and close the current SPEC as DONE with fresh evidence,
+then inspect `work.sh status`. Stop on an empty or not-ready board, REVIEW,
+BLOCKED, FAILED, a human gate, or missing evidence.
+
+When another task is ready, use the native Codex app `list_projects` to resolve
+the current saved project, then `create_thread` with `environment: {type: "local"}`
+and the prompt `Run gp --feature --next --chain in the current project.` Pass only
+the chain id and iteration metadata; omit model/reasoning overrides. This must be
+a new task with an empty transcript. Never use `fork_thread` or
+`send_message_to_thread`, and never use a CLI bridge. Create at most one successor
+for each completed run. If task creation or project mapping is unavailable,
+return `chain_unavailable` and stop in the current session.
+<!-- /tool:codex -->
+
+<!-- tool:claude -->
+`--chain` is Codex-only. Claude Code reports `chain_unsupported_in_claude` and
+stops instead of trying to open a Codex task.
+<!-- /tool:claude -->

@@ -112,6 +112,12 @@ fi
             self.assertNotIn("model: claude", role.read_text(encoding="utf-8"))
         for p in (cwd / ".codex/scripts").glob("*.sh"):
             self.assertTrue(os.access(p, os.X_OK))
+        codex_router = (self.projects["codex"] / ".codex/commands/td.md").read_text(encoding="utf-8")
+        codex_contract = (self.projects["codex"] / ".codex/commands/td-runtime/contract-work.md").read_text(encoding="utf-8")
+        claude_contract = (self.projects["claude"] / ".claude/commands/td-runtime/contract-work.md").read_text(encoding="utf-8")
+        self.assertIn("--chain", codex_router)
+        self.assertIn("create_thread", codex_contract)
+        self.assertNotIn("create_thread", claude_contract)
 
     def test_02_force_preserves_user_work_and_memory(self):
         preserved = {

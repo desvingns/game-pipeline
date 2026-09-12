@@ -30,6 +30,17 @@ checkpoints, ownership, gate evidence and close-out. Do not copy full session hi
 into each specialist. The recommended chat orchestrator is Sol / high; never change
 the user's primary model automatically.
 
+When the invocation includes `--feature --next --chain`, complete one SPEC and
+close it with fresh evidence before checking `work.sh status`. For a ready next
+task, use the Codex app's `list_projects` and `create_thread` operations to open a
+new task against the same saved project with `environment: {type: "local"}` and
+the prompt `Run gp --feature --next --chain in the current project.` Omit model
+and reasoning overrides. This is a new empty transcript: never use
+`fork_thread` or `send_message_to_thread`. Stop and report `backlog_empty`,
+`no_ready_tasks`, `chain_unavailable`, REVIEW, BLOCKED or FAILED; do not continue
+inside the current session or use a CLI bridge. Create at most one successor for
+each completed run.
+
 <!-- engine:2d -->
 For art, use the available native image generation tool after STYLE LOCK, then
 register its returned file using the art adapter. If native generation is absent,

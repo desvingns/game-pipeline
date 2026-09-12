@@ -72,4 +72,9 @@ otherwise. Delegate bounded tasks using pipeline/model-policy.json: Codex Luna x
 Sol xhigh, Astra high by difficulty; Claude models are independently selected and
 can be updated in claude.tiers. Keep the primary chat model unchanged; recommended
 Codex orchestrator is Sol high. Use the shared script for claims, ownership,
-checkpoints, actual gate evidence and close-out. See docs/WORKFLOW.md in the generator.
+ checkpoints, actual gate evidence and close-out. See docs/WORKFLOW.md in the generator.
+
+
+
+`--chain` is Codex-only. Claude Code reports `chain_unsupported_in_claude` and
+stops instead of trying to open a Codex task.

@@ -31,5 +31,9 @@
    precisely when something remains. Stop after one task unless a batch is explicitly
    authorized and compatible with the project's execution contract.
 
+9. Claude Code reports `chain_unsupported_in_claude` for `--chain`; it does not
+   create or control Codex tasks.
+
+
 Return one FEATURE RUN block: SPEC, STATUS, FILES, MODELS (requested/observed),
 REVIEW, TESTS, GATE_JSON, EVIDENCE, MANUAL_CHECKS, NOT_DONE, NEXT_READY.

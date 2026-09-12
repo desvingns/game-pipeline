@@ -58,6 +58,10 @@ Unknown or conflicting selectors are an error: show this table and ask the user 
 
 - `--next` — with `--feature` or `--art`, take the top item from the corresponding board instead of
   a free-text description.
+- `--chain` — Codex only, and only with `--feature --next`: after a verified DONE,
+  create one fresh Codex task in the same saved project with the same command.
+  Stop on an empty/not-ready board, REVIEW/BLOCKED/FAILED result, a human gate
+  or unavailable task creation. Never fork or reuse the current transcript.
 - `--spec ID`, `--track NAME` — select a ready SPEC or track in SPECS/.
 - `--preview` — show selection, prerequisites, proposed files, model routing and checks before writes.
 - `--batch N` — explicitly authorized bounded sequence; default is one SPEC.

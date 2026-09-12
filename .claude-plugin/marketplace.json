@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Reusable Godot game pipeline for 2D Android and 3D Windows FPS projects. The gp-dev plugin bootstraps and routes one production workflow.",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {

@@ -31,5 +31,14 @@
    precisely when something remains. Stop after one task unless a batch is explicitly
    authorized and compatible with the project's execution contract.
 
+9. With Codex `--chain`, after a verified DONE run `work.sh status`, then create
+   exactly one new Codex task with `create_thread` in the same saved project and
+   the prompt `Run gp --feature --next --chain in the current project.` The new
+   task must have an empty transcript and inherit no model override. Do not use
+   `fork_thread` or `send_message_to_thread`. Stop on `backlog_empty`,
+   `no_ready_tasks`, a blocker, a human gate or unavailable task creation. Claude
+   reports `chain_unsupported_in_claude` for this modifier.
+
+
 Return one FEATURE RUN block: SPEC, STATUS, FILES, MODELS (requested/observed),
 REVIEW, TESTS, GATE_JSON, EVIDENCE, MANUAL_CHECKS, NOT_DONE, NEXT_READY.
