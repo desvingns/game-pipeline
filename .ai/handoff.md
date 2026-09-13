@@ -125,3 +125,32 @@ Unassigned — follow-up game vertical slice and engine harness integration.
   The Codex plugin install was not refreshed in this session.
 - NEXT: live Claude dispatch check of one simple SPEC in a sandbox game; existing
   games need bootstrap `--force`/`--adopt` to receive frontmatter and settings.
+
+## Update — 2026-09-13: v1.3 light execution profile (Claude Code)
+
+- Completed gp-009: promoted the user's Codex-only `--feature --light` prototype
+  from D:/Pet/Ground_Truth into the generator, generalized to Claude Code.
+  `claim --profile light` -> one expert-tier developer (implementation+tests+one
+  repair), then one simple-tier closer (reviewer, verifier). Immutable per run
+  (`profile_mismatch` on mismatched recovery); `light_role_not_allowed`,
+  `light_risk_requires_standard` (blender/replay_codec/concurrency/
+  critical_lifecycle/data_loss), `light_profile_incompatible` (non-production);
+  incompatible with `--batch`. `profiles.light`/`claude.profiles.light` optionally
+  pin an explicit implementer/closer model, else derive from the expert/simple
+  tier. In Claude Code, the closer's pinned frontmatter effort can exceed the
+  simple tier's target — reported via `tier_reasoning_effort`/`effort_source`,
+  reusing gp-008's honesty mechanism (refactored into `claude_effort_report`).
+- Full smoke passes (58 tests), parity 296 files. Committed/pushed (`ecfda6e`);
+  marketplace and gp-dev plugin refreshed to 1.3.0 (user must restart Claude).
+- Re-adopted D:/Pet/Ground_Truth for both tools (`--force`): its hand-edited
+  Codex prototype text was replaced by the canonical rendering (archived under
+  its own `archive/gp-bootstrap/`); `pipeline/project.json` and
+  `pipeline/model-policy.json` (including the project's own explicit
+  `profiles.light` override) were preserved untouched; its 24 WIP-modified files
+  were untouched. Ground_Truth's local `pipeline/tests/test_light_profile.py`
+  still passes against the regenerated `.codex/scripts/gp_work.py`. Spot-checked
+  Claude light routing directly against `.claude/scripts/gp_work.py` in that
+  project (developer -> Opus 5/xhigh; reviewer -> Sonnet 5, honest xhigh-vs-medium
+  mismatch reported).
+- NEXT: live dispatch of a `--feature --light` assignment through either tool's
+  native spawn (not just `route`/`policy` unit-level checks).
