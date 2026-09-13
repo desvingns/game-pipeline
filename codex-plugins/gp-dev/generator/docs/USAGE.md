@@ -230,3 +230,6 @@ The recommended Codex chat orchestrator is GPT-5.6 Sol with high reasoning.
 Specialists use explicit project policy for both tools; Claude settings live under
 claude.tiers and claude.role_tiers. --status, --doctor, --resume, --metrics, --spec ID and
 --track NAME support existing backlog work. One SPEC per run remains the default.
+`--feature --light` (both tools) trades a bounded set of risks for one expert-tier
+implementer and one simple-tier closer instead of the full role roster; see
+[the light execution profile](WORKFLOW.md#light-execution-profile).

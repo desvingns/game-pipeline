@@ -73,7 +73,11 @@ Sol xhigh, Astra high by difficulty; Claude Code Sonnet 5 medium, Sonnet 5 xhigh
 Opus 5 xhigh (claude.tiers; effort pinned per role agent via claude.role_tiers). Keep
 the primary chat model unchanged; recommended Codex orchestrator is Sol high. Use the
 shared script for claims, ownership, checkpoints, actual gate evidence and close-out.
-See docs/WORKFLOW.md in the generator.
+`--feature --light` (both tools) is a cost-aware profile: one expert-tier developer
+owns implementation/tests/repairs, one simple-tier closer runs reviewer then verifier;
+claim with `--profile light`; forbidden for Blender/critical-lifecycle/concurrency/
+replay-codec/data-loss risk and incompatible with --batch. See docs/WORKFLOW.md in
+the generator.
 
 
 

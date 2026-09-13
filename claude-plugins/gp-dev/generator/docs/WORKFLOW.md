@@ -99,6 +99,27 @@ previous copy. STYLE LOCK `--lock` always asks and image generation keeps the de
 prompt. The rules apply after workspace trust and match only
 `bash .claude/scripts/<prefix>-<name>.sh ...` invoked from the repository root.
 
+### Light execution profile
+
+`--feature --light` (`claim --profile light`) is a cost-aware execution shape for
+**both** tools, not a weaker acceptance contract: one **implementer** at the
+developer role's expert tier owns implementation, its focused tests and up to one
+repair pass — no separate tester/architect assignment — then one fresh **closer**
+at the simple tier completes reviewer and verifier sequentially. Defaults (one
+active specialist, two attempts per stage, a 12,000 character context packet) live
+in `profiles.light`; every field is optional and falls back to the generator
+default (limits) or the target tier (implementer/closer model). An explicit
+override lives in `profiles.light.{implementer,closer}` for Codex or
+`claude.profiles.light.{implementer,closer}` for Claude — the two tools never share
+model names. The recorded run profile is immutable; recovering a run under the
+other profile fails `profile_mismatch`. `light_role_not_allowed` rejects any role
+outside developer/reviewer/verifier; `light_risk_requires_standard` rejects
+Blender, replay-codec, concurrency, critical-lifecycle or data-loss risk; `--batch`
+is incompatible. In Claude Code, the closer's pinned frontmatter effort can exceed
+the simple tier's target (reviewer/verifier default to the complex tier); the
+dispatch descriptor's `tier_reasoning_effort` reports that gap rather than
+silently claiming the cheaper effort ran.
+
 The runtime selects per subtask, not only by profession or S/M card size. Expert
 risk triggers bypass cheaper failed attempts. Review can set `review_floor`.
 `failure_kind: reasoning` permits escalation; environment/tool/model unavailability

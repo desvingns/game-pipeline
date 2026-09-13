@@ -64,6 +64,13 @@ Unknown or conflicting selectors are an error: show this table and ask the user 
   or unavailable task creation. Never fork or reuse the current transcript.
 - `--spec ID`, `--track NAME` — select a ready SPEC or track in SPECS/.
 - `--preview` — show selection, prerequisites, proposed files, model routing and checks before writes.
+- `--light` — with `--feature`, a cost-aware execution shape for both tools: one expert-tier
+  developer owns implementation, its focused tests and up to one repair pass (no separate
+  tester/architect assignment), then one simple-tier closer completes reviewer and verifier
+  sequentially. Claim with `work.sh claim --profile light`; the recorded profile is immutable
+  for that run. Mandatory final gates, manual evidence, acceptance mapping and ART dependencies
+  are unchanged. Blender, replay-codec, concurrency, critical-lifecycle and data-loss risks
+  require the standard profile. Incompatible with `--batch`.
 - `--batch N` — explicitly authorized bounded sequence; default is one SPEC.
 - `--unattended` — declares nobody is watching. Advisory gates proceed on their recommended default
   and are listed in a "decisions taken while unattended" summary. Existing scope

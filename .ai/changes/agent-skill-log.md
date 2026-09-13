@@ -503,3 +503,31 @@ Append-only. Format: `.ai/changes/README.md`.
 - change: Pass CHANGED_FILES, diff and evidence to shell-less read-only roles; document canonical script invocation for allow rules.
 - why: Keep reviewer independence and permission matching explicit.
 - breaking: no
+
+## 2026-09-13-gp009-001
+- kind: script
+- target: templates/common/scripts/gp_work.py
+- change: Add the light execution profile (profile_config/claude_effort_report/light_model), route/claim/assign/context_packet/resume/metrics/CLI support, generalized to both tools.
+- why: Promote the user's Codex-only prototype (D:/Pet/Ground_Truth) into the generator and extend it to Claude Code.
+- breaking: no (profiles.light/claude.profiles.light are additive; missing entries derive from the expert/simple tier)
+
+## 2026-09-13-gp009-002
+- kind: schema
+- target: schemas/work-model-policy.schema.json
+- change: Describe profiles.light and claude.profiles.light (optional implementer/closer + limits).
+- why: Keep the schema consistent with the new policy shape.
+- breaking: no
+
+## 2026-09-13-gp009-003
+- kind: runbook
+- target: templates/common/commands/runtime/feature.md, templates/dimensions/3d/runtime/feature.md, templates/common/commands/runtime/contract-work.md, templates/common/commands/{{PREFIX}}.md
+- change: Document --light claim/dispatch/close semantics and the tier-derivation mapping for both tools.
+- why: The orchestrator must claim with --profile light and honor its guards.
+- breaking: no
+
+## 2026-09-13-gp009-004
+- kind: doc
+- target: templates/marketplace/SKILL.md.tmpl, skills/gp-dev/SKILL.md, templates/marketplace/gp.md.tmpl, docs/WORKFLOW.md, docs/USAGE.md
+- change: Document the light execution profile for packaged installs and usage docs.
+- why: Keep installed guidance consistent with the policy.
+- breaking: no

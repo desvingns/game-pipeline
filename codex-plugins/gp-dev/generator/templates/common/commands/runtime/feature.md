@@ -12,10 +12,11 @@
 3. Claim the task before edits. Capture existing changes; preserve the project's
    architecture mapping and pure simulation rules. Resolve required ART dependencies
    rather than claiming final acceptance with unfinished assets.
-4. Prepare bounded assignments and actually spawn the selected native models. A
-   simple patch uses the simple tier; cross-system work complex; algorithms/Blender
-   and critical lifecycle expert. Tester writes independent behavior tests. Reviewer
-   and verifier are read-only; run them over the relevant contracts and changed code.
+4. Under the standard profile, prepare bounded assignments and actually spawn the
+   selected native models. A simple patch uses the simple tier; cross-system work
+   complex; algorithms/Blender and critical lifecycle expert. Tester writes
+   independent behavior tests. Reviewer and verifier are read-only; run them over
+   the relevant contracts and changed code.
 5. Repair concrete findings within the attempt budget. Escalate reasoning failures
    with current diff, reproduction and rejected hypotheses, not full conversation.
    Environment failures require environment diagnosis, not a more expensive model.
@@ -44,5 +45,25 @@
    create or control Codex tasks.
 <!-- /tool:claude -->
 
-Return one FEATURE RUN block: SPEC, STATUS, FILES, MODELS (requested/observed),
+## `--light` profile
+
+Use this only with `--feature`, never with `--batch`. Claim with `work.sh claim
+--profile light`. Dispatch one expert-tier developer assignment that owns production
+implementation, its focused tests and up to one repair pass. Do not create separate
+tester or architect assignments. Keep one compact context packet and return a concrete
+failure to the same developer instead of opening a new repair role.
+
+After the source is stable, run the required final gates once. Additional affected
+gates are justified only by a concrete failure or a changed source snapshot. Then use
+one fresh simple-tier closer sequentially for two read-only runtime assignments:
+reviewer first, verifier second. They remain independent of implementation and each
+must return its own result contract. Mandatory final gates, manual checks, acceptance
+mapping, source-bound evidence, ART dependencies and normal player-path verification
+are identical to the standard profile. If the runtime reports
+`light_risk_requires_standard`, stop and rerun the SPEC with the standard profile;
+do not weaken or relabel its risk. In Claude Code, the closer's pinned frontmatter
+effort may exceed the simple tier's; the dispatch descriptor's `tier_reasoning_effort`
+reports the gap honestly, it does not silently claim the cheaper effort ran.
+
+Return one FEATURE RUN block: SPEC, STATUS, PROFILE, FILES, MODELS (requested/observed),
 REVIEW, TESTS, GATE_JSON, EVIDENCE, MANUAL_CHECKS, NOT_DONE, NEXT_READY.

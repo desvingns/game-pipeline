@@ -1,6 +1,6 @@
 {
   "name": "gp-dev",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Godot 2D Android and Blender-based 3D Windows FPS game pipeline.",
   "author": {
     "name": "Kirill Shavrin",

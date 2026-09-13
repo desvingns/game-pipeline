@@ -28,6 +28,9 @@ ID = r"[A-Za-z][A-Za-z0-9_]*-?\d+[A-Za-z0-9_-]*"
 READ_ONLY = {"reviewer", "verifier", "architect", "explorer"}
 TIERS = ["simple", "complex", "expert"]
 EFFORTS = {"low", "medium", "high", "xhigh", "max"}
+PROFILES = {"standard", "light"}
+LIGHT_ROLES = {"developer", "reviewer", "verifier"}
+LIGHT_BLOCKED_RISKS = {"blender", "replay_codec", "concurrency", "critical_lifecycle", "data_loss"}
 DEFAULT_POLICY = {
     "version": 1, "mode": "tiered",
     "claude": {
@@ -48,6 +51,7 @@ DEFAULT_POLICY = {
         "expert": {"model": "gpt-6-astra", "reasoning": "high"}},
     "max_concurrent_agents": 3, "max_delegation_depth": 1,
     "max_attempts_per_stage": 3, "context_chars": 24000,
+    "profiles": {"light": {"max_concurrent_agents": 1, "max_attempts_per_stage": 2, "context_chars": 12000}},
     "fallbacks": {}}
 
 
@@ -454,6 +458,7 @@ def policy(root):
     for field in ("max_concurrent_agents", "max_attempts_per_stage", "max_delegation_depth", "context_chars"):
         if type(value.get(field)) != int or value[field] < 1:
             fail("policy_invalid", field)
+    validate_light_profile(value.get("profiles", {}).get("light", {}), "profiles.light")
     native = value.get("claude", {})
     if not isinstance(native, dict) or native.get("mode", "tiered") not in {"tiered", "auto", "native"}:
         fail("policy_invalid", "claude.mode must be tiered|auto|native")
@@ -466,7 +471,23 @@ def policy(root):
     for role, turns in native.get("max_turns", {}).items():
         if type(turns) != int or turns < 1:
             fail("policy_invalid", "claude.max_turns." + role)
+    validate_light_profile(native.get("profiles", {}).get("light", {}), "claude.profiles.light")
     return value
+
+
+def validate_light_profile(light, label):
+    """Every field of a light-profile block is optional; a present field must be well-formed."""
+    if not isinstance(light, dict):
+        fail("policy_invalid", label)
+    for field in ("max_concurrent_agents", "max_attempts_per_stage", "context_chars"):
+        if field in light and (type(light[field]) != int or light[field] < 1):
+            fail("policy_invalid", label + "." + field)
+    for target in ("implementer", "closer"):
+        if target not in light:
+            continue
+        entry = light[target]
+        if not isinstance(entry, dict) or not isinstance(entry.get("model"), str) or entry.get("reasoning") not in EFFORTS:
+            fail("policy_invalid", label + "." + target)
 
 
 def claude_policy(p):
@@ -475,7 +496,8 @@ def claude_policy(p):
     return {"mode": native.get("mode", "tiered"),
             "tiers": {tier: native.get("tiers", {}).get(tier) or defaults["tiers"][tier] for tier in TIERS},
             "role_tiers": {**defaults["role_tiers"], **native.get("role_tiers", {})},
-            "max_turns": {**defaults["max_turns"], **native.get("max_turns", {})}}
+            "max_turns": {**defaults["max_turns"], **native.get("max_turns", {})},
+            "profiles": {"light": native.get("profiles", {}).get("light", {})}}
 
 
 def claude_role_max_turns(p, role):
@@ -491,14 +513,89 @@ def claude_role_setting(p, role):
     return native["tiers"][native["role_tiers"].get(role, native["role_tiers"]["default"])]
 
 
-def route(root, request):
+def profile_config(p, profile_name):
+    """Tool-neutral execution limits for a profile; light falls back to the generator defaults."""
+    if profile_name not in PROFILES:
+        fail("profile_invalid", "profile must be standard|light")
+    if profile_name == "standard":
+        return {"max_concurrent_agents": p["max_concurrent_agents"], "max_attempts_per_stage": p["max_attempts_per_stage"],
+                "context_chars": p["context_chars"]}
+    light, defaults = p.get("profiles", {}).get("light", {}), DEFAULT_POLICY["profiles"]["light"]
+    return {field: light.get(field, defaults[field]) for field in defaults}
+
+
+def claude_effort_report(p, role, tier):
+    """Model for `tier`, with the role's pinned frontmatter effort reported honestly."""
+    pinned = claude_role_setting(p, role)
+    if pinned is None:
+        return {"model": None, "reasoning": None, "tier_reasoning": None, "effort_source": "session"}, \
+            ["Claude native mode: the session selects model and effort"]
+    entry = claude_policy(p)["tiers"][tier]
+    reasons = []
+    if pinned["reasoning"] != entry["reasoning"]:
+        reasons.append(f"Claude Code has no per-spawn effort: the {role} agent frontmatter applies "
+                        f"{pinned['reasoning']} instead of tier effort {entry['reasoning']}")
+    return {"model": entry["model"], "reasoning": pinned["reasoning"], "tier_reasoning": entry["reasoning"],
+            "effort_source": "agent-frontmatter"}, reasons
+
+
+def light_model(p, tool, role, target, target_tier):
+    """Model for a light-profile role: an explicit policy override, else the target tier."""
+    if tool == "claude":
+        explicit = claude_policy(p)["profiles"]["light"].get(target)
+        if not explicit:
+            return claude_effort_report(p, role, target_tier)
+        pinned = claude_role_setting(p, role)
+        if pinned is None:
+            return {"model": None, "reasoning": None, "tier_reasoning": None, "effort_source": "session"}, \
+                ["Claude native mode: the session selects model and effort"]
+        reasons = []
+        if pinned["reasoning"] != explicit["reasoning"]:
+            reasons.append(f"Claude Code has no per-spawn effort: the {role} agent frontmatter applies "
+                            f"{pinned['reasoning']} instead of the light profile's {explicit['reasoning']}")
+        return {"model": explicit["model"], "reasoning": pinned["reasoning"], "tier_reasoning": explicit["reasoning"],
+                "effort_source": "agent-frontmatter"}, reasons
+    explicit = p.get("profiles", {}).get("light", {}).get(target)
+    if explicit:
+        return {"model": explicit["model"], "reasoning": explicit["reasoning"]}, []
+    if p["mode"] == "inherit":
+        return {"model": None, "reasoning": None}, []
+    return dict(p["tiers"][target_tier]), []
+
+
+def route(root, request, profile_name=None):
     p = policy(root)
     role = request.get("role", "developer")
     scope = request.get("execution_scope", "production")
+    tool = request.get("tool", "codex")
+    if tool not in {"claude", "codex"}:
+        fail("assignment_invalid", "tool must be claude|codex")
+    profile_name = profile_name or request.get("profile", "standard")
+    limits = profile_config(p, profile_name)
+    if profile_name == "light":
+        if scope != "production":
+            fail("light_profile_incompatible", "Light supports production assignments only")
+        if role not in LIGHT_ROLES:
+            fail("light_role_not_allowed", "The implementer owns tests and repairs; light only dispatches developer, reviewer and verifier")
+        risk = request.get("risk", {})
+        blocked = sorted(key for key in LIGHT_BLOCKED_RISKS if risk.get(key))
+        if blocked:
+            fail("light_risk_requires_standard", ", ".join(blocked))
+        if request.get("failure_kind") in {"environment", "tool", "model_unavailable"}:
+            fail("external_blocker", "Repair the environment/tool; light does not spend an implementer retry on missing inputs")
+        attempt = request.get("attempt", 1)
+        if type(attempt) != int or attempt < 1 or attempt > limits["max_attempts_per_stage"]:
+            fail("attempt_budget_exhausted", "Light permits a limited number of attempts per stage; switch to standard or split the task")
+        target = "implementer" if role == "developer" else "closer"
+        target_tier = "expert" if target == "implementer" else "simple"
+        model, extra_reasons = light_model(p, tool, role, target, target_tier)
+        reasons = ["light profile", "single expert-tier implementer" if target == "implementer" else "sequential simple-tier close-out", *extra_reasons]
+        return {"pass": True, "tool": tool, "tier": "light-" + target, "profile": "light", **model, "reasons": reasons,
+                "sandbox": "read-only" if role in READ_ONLY else "workspace-write"}
     if scope == "evaluated-authoring":
         if not request.get("frozen_model") or not request.get("allowlist"):
             fail("authoring_contract_missing", "Evaluated authoring requires frozen_model and explicit neutral context allowlist")
-        return {"pass": True, "tier": "frozen", "model": request["frozen_model"], "reasoning": request.get("frozen_reasoning"), "reasons": ["isolated evaluated authoring; no production tier routing"]}
+        return {"pass": True, "tier": "frozen", "model": request["frozen_model"], "reasoning": request.get("frozen_reasoning"), "profile": "standard", "reasons": ["isolated evaluated authoring; no production tier routing"]}
     tier = request.get("complexity", "simple")
     if tier not in TIERS:
         fail("assignment_invalid", "complexity must be simple|complex|expert")
@@ -516,7 +613,7 @@ def route(root, request):
     if role in READ_ONLY and request.get("review_floor") in TIERS:
         tier = TIERS[max(TIERS.index(tier), TIERS.index(request["review_floor"]))]
     attempt = request.get("attempt", 1)
-    if type(attempt) != int or attempt < 1 or attempt > p["max_attempts_per_stage"]:
+    if type(attempt) != int or attempt < 1 or attempt > limits["max_attempts_per_stage"]:
         fail("attempt_budget_exhausted", "Diagnose or split without weakening acceptance")
     failure = request.get("failure_kind")
     if failure in {"environment", "tool", "model_unavailable"}:
@@ -524,28 +621,17 @@ def route(root, request):
     if attempt > 1 and failure == "reasoning":
         tier = TIERS[min(2, TIERS.index(tier) + attempt - 1)]
         reasons.append("reasoning failure escalation")
-    tool = request.get("tool", "codex")
-    if tool not in {"claude", "codex"}:
-        fail("assignment_invalid", "tool must be claude|codex")
     if tool == "claude":
         # Claude Code accepts a per-spawn model, but effort only from the role agent's
         # frontmatter. Report the effort that actually applies, not the tier's wish.
-        pinned = claude_role_setting(p, role)
-        if pinned is None:
-            model = {"model": None, "reasoning": None, "tier_reasoning": None, "effort_source": "session"}
-            reasons.append("Claude native mode: the session selects model and effort")
-        else:
-            entry = claude_policy(p)["tiers"][tier]
-            model = {"model": entry["model"], "reasoning": pinned["reasoning"],
-                     "tier_reasoning": entry["reasoning"], "effort_source": "agent-frontmatter"}
-            if pinned["reasoning"] != entry["reasoning"]:
-                reasons.append(f"Claude Code has no per-spawn effort: the {role} agent frontmatter applies "
-                               f"{pinned['reasoning']} instead of tier effort {entry['reasoning']}")
+        model, extra_reasons = claude_effort_report(p, role, tier)
+        reasons += extra_reasons
     elif p["mode"] == "inherit" and role != "backlog-discovery":
         model = {"model": None, "reasoning": None}
     else:
         model = DEFAULT_POLICY["tiers"]["simple"] if role == "backlog-discovery" else p["tiers"][tier]
-    return {"pass": True, "tool": tool, "tier": tier, **model, "reasons": reasons, "sandbox": "read-only" if role in READ_ONLY else "workspace-write"}
+    return {"pass": True, "tool": tool, "tier": tier, "profile": "standard", **model, "reasons": reasons,
+            "sandbox": "read-only" if role in READ_ONLY else "workspace-write"}
 
 
 def project(root):
@@ -642,8 +728,10 @@ def run_load(root, run_id):
     return value
 
 
-def claim(root, key, owner, takeover=False):
+def claim(root, key, owner, takeover=False, profile_name="standard"):
     safe_id(owner)
+    if profile_name not in PROFILES:
+        fail("profile_invalid", "profile must be standard|light")
     cards = ready(root, board(root), key=key)
     if not cards:
         fail("spec_missing", key)
@@ -660,21 +748,25 @@ def claim(root, key, owner, takeover=False):
             event(root, "claim_recovered", previous=previous)
             old = run_load(root, previous["run_id"])
             current_card(root, old)
+            if old.get("profile", "standard") != profile_name:
+                fail("profile_mismatch", "Recover a run with the profile it started with")
             old["owner"] = owner
             write(root, run_path(root, old["id"]), old)
             write(root, lock, {"run_id": old["id"], "owner": owner, "heartbeat": time.time()})
-            return {"pass": True, "run_id": old["id"], "spec": key, "recovered": True, "stage": old["stage"]}
+            return {"pass": True, "run_id": old["id"], "spec": key, "recovered": True,
+                    "profile": old.get("profile", "standard"), "stage": old["stage"]}
         elif not card["ready"]:
             fail("spec_not_ready", ", ".join(card["reasons"]))
         run_id = key + "-" + uuid.uuid4().hex[:12]
         run = {"version": 1, "id": run_id, "spec": key, "owner": owner, "status": "ACTIVE", "stage": "implement",
+               "profile": profile_name,
                "acceptance_sha256": card["acceptance_sha256"], "started": time.time(), "baseline": snapshot(root),
                "checkpoints": [], "gates": {}, "assignments": [], "evidence": None}
         write(root, run_path(root, run_id), run)
         write(root, lock, {"run_id": run_id, "owner": owner, "heartbeat": time.time()})
         set_status(root, card, "ACTIVE")
-        event(root, "run_started", run_id=run_id, spec=key)
-    return {"pass": True, "run_id": run_id, "spec": key, "baseline_files": len(run["baseline"])}
+        event(root, "run_started", run_id=run_id, spec=key, profile=profile_name)
+    return {"pass": True, "run_id": run_id, "spec": key, "profile": profile_name, "baseline_files": len(run["baseline"])}
 
 
 def ensure_owner(root, run):
@@ -714,11 +806,13 @@ def resume(root, run_id):
     stale = [key for key, value in run["gates"].items() if value["source_sha256"] != current or not inside(root, value["path"]).is_file() or digest(inside(root, value["path"])) != value["sha256"]]
     return {"pass": True, "run_id": run_id, "stage": run["stage"], "checkpoints": run["checkpoints"][-3:],
             "changed_files": changed(run["baseline"], snapshot(root)), "stale_gates": stale,
-            "assignments": run["assignments"], "next": "Resume the recorded stage; rerun stale required checks"}
+            "assignments": run["assignments"], "profile": run.get("profile", "standard"),
+            "next": "Resume the recorded stage; rerun stale required checks"}
 
 
-def context_packet(root, request):
+def context_packet(root, request, profile_name=None):
     p = policy(root)
+    limits = profile_config(p, profile_name or request.get("profile", "standard"))
     refs = request.get("context", [])
     if not isinstance(refs, list) or not refs:
         fail("context_missing", "Provide a bounded context list, with path and optional start/end lines")
@@ -746,8 +840,8 @@ def context_packet(root, request):
         parts.append(f"SOURCE {identity}:{start}-{end}\n" + "\n".join(lines[start - 1:end]))
         hashes[identity] = digest(path)
     packet = "\n\n".join(parts)
-    if len(packet) > p["context_chars"]:
-        fail("context_budget_exceeded", f"{len(packet)} characters; select sections within {p['context_chars']}")
+    if len(packet) > limits["context_chars"]:
+        fail("context_budget_exceeded", f"{len(packet)} characters; select sections within {limits['context_chars']}")
     return {"text": packet, "hashes": hashes, "chars": len(packet), "estimated_tokens": round(len(packet) / 4), "estimate_method": "chars/4, not observed usage"}
 
 
@@ -804,6 +898,8 @@ def assign(root, run_id, request):
     contract(root, "assignment", request)
     p = policy(root)
     run = run_load(root, run_id)
+    profile_name = run.get("profile", "standard")
+    limits = profile_config(p, profile_name)
     ensure_owner(root, run)
     current_card(root, run)
     if request.get("depth", 1) > p["max_delegation_depth"]:
@@ -820,12 +916,12 @@ def assign(root, run_id, request):
     role = request["role"]
     if role in READ_ONLY and request["write_paths"]:
         fail("readonly_role", role)
-    selection = route(root, request)
-    packet = context_packet(root, request)
+    selection = route(root, request, profile_name)
+    packet = context_packet(root, request, profile_name)
     with mutex(root):
         active = [load(path) for path in (root / ".ai/gp/assignments").glob("*.json")]
         active = [a for a in active if a["status"] == "ACTIVE"]
-        if len(active) >= p["max_concurrent_agents"]:
+        if len(active) >= limits["max_concurrent_agents"]:
             fail("agent_capacity", "Wait for an existing agent; do not spawn another")
         for other in active:
             if other["request"].get("repository", "project") != repo_name: continue
@@ -834,7 +930,7 @@ def assign(root, run_id, request):
                     fail("write_conflict", f"{left} overlaps assignment {other['id']}")
         previous = [load(path) for path in (root / ".ai/gp/assignments").glob("*.json")]
         attempts = sum(a["run_id"] == run_id and a["request"].get("stage", a["request"]["role"]) == request.get("stage", role) for a in previous)
-        if attempts >= p["max_attempts_per_stage"]:
+        if attempts >= limits["max_attempts_per_stage"]:
             fail("attempt_budget_exhausted", request.get("stage", role))
         key = run_id + "-" + uuid.uuid4().hex[:8]
         value = {"version": 1, "id": key, "run_id": run_id, "status": "ACTIVE", "started": time.time(),
@@ -852,8 +948,14 @@ def dispatch(root, key):
     request, selection = a["request"], a["selection"]
     if request.get("execution_scope") == "evaluated-authoring":
         fail("isolated_workspace_required", "Export the neutral allowlist into a dedicated authoring repository before dispatch; never inherit this production workspace")
+    profile_name = selection.get("profile", "standard")
+    light_note = ("\nLight profile: this assignment owns its own tests and one repair pass; do not expect a "
+                   "separate tester or architect assignment.\n" if profile_name == "light" and request["role"] == "developer" else
+                   "\nLight profile: one sequential close-out pass; report your result independently of the other "
+                   "close-out role.\n" if profile_name == "light" else "")
     prompt = ("Execute this bounded assignment. Do not delegate, change acceptance, edit gates, commit, or publish. "
-              "Reviewers only report findings. Use Bash on every platform. Archive superseded files; never delete.\n"
+              "Reviewers only report findings. Use Bash on every platform. Archive superseded files; never delete."
+              + light_note +
               f"Assignment: {key}\nRole: {request['role']}\nGoal: {request['goal']}\n"
               f"Workspace: {repository_root(root, request.get('repository', 'project'))}\n"
               f"Allowed writes: {json.dumps(request['write_paths'])}\n"
@@ -864,7 +966,7 @@ def dispatch(root, key):
     value = {"tool": selection.get("tool", request.get("tool", "codex")), "model": selection.get("model"),
              "workspace": str(repository_root(root, request.get("repository", "project"))),
              "reasoning_effort": selection.get("reasoning"), "sandbox": selection.get("sandbox", "read-only"),
-             "fork_history": False, "prompt": prompt,
+             "profile": profile_name, "fork_history": False, "prompt": prompt,
              "instructions": "Use native subagent tools with these explicit settings. Codex passes model and reasoning_effort to the spawn tool. Claude Code spawns the named role agent and passes model as the Agent tool model parameter; reasoning_effort is applied by that agent's frontmatter and cannot be changed per spawn; null means the session selects. A prompt mentioning a model alone does not select it. If unavailable, report model_unavailable; never silently substitute."}
     if value["tool"] == "claude":
         value.update(effort_source=selection.get("effort_source"), tier_reasoning_effort=selection.get("tier_reasoning"))
@@ -1172,7 +1274,11 @@ def metrics(root):
             for kind, value in a["usage"].items():
                 item["observed_usage"][kind] = item["observed_usage"].get(kind, 0) + value
     coordinator = [load(p) for p in (root / ".ai/gp/usage").glob("*.json")]
-    return {"pass": True, "models": totals, "coordinator_and_tools": coordinator,
+    profiles = {}
+    for path in (root / ".ai/gp/runs").glob("*/run.json"):
+        name = load(path).get("profile", "standard")
+        profiles[name] = profiles.get(name, 0) + 1
+    return {"pass": True, "models": totals, "profiles": profiles, "coordinator_and_tools": coordinator,
             "subscription_limits": "unavailable in portable runtime; read host usage tools when available", "api_cost": None}
 
 
@@ -1267,6 +1373,7 @@ def main():
     command.add_argument("--spec", required=True)
     command.add_argument("--owner", required=True)
     command.add_argument("--recover-stale", action="store_true")
+    command.add_argument("--profile", choices=sorted(PROFILES), default="standard")
     sub.add_parser("recover-mutation").add_argument("--pid", type=int, required=True)
     for name in ("resume", "checkpoint", "assign", "gates", "gate", "close"):
         command = sub.add_parser(name)
@@ -1310,7 +1417,7 @@ def main():
         rows = ready(root, board(root), args.track, args.spec)
         eligible = [row for row in rows if row["ready"]]
         return {"pass": True, "status": "ready" if eligible else "backlog_empty" if not any(c["status"] != "DONE" for c in board(root)) else "no_ready_tasks", "selected": eligible[0] if eligible else None, "tasks": rows if name == "status" else []}
-    if name == "claim": return claim(root, args.spec, args.owner, args.recover_stale)
+    if name == "claim": return claim(root, args.spec, args.owner, args.recover_stale, args.profile)
     if name == "recover-mutation": return recover_mutation(root, args.pid)
     if name == "resume": return resume(root, args.run)
     if name == "checkpoint": return checkpoint(root, args.run, args.stage, args.note)

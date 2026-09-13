@@ -8,3 +8,4 @@
 
 - [Claude Code effort is frontmatter-only](claude-effort-frontmatter.md) — per-spawn model, per-role effort pinning, full model IDs
 - [Claude project permissions](claude-project-permissions.md) — generated allow/ask rules, merge semantics, matching limits
+- [Light execution profile](light-execution-profile.md) — one expert implementer + one simple closer, both tools, immutable per run

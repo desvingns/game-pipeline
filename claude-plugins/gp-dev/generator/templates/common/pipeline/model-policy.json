@@ -53,5 +53,12 @@
   "max_delegation_depth": 1,
   "max_attempts_per_stage": 3,
   "context_chars": 24000,
+  "profiles": {
+    "light": {
+      "max_concurrent_agents": 1,
+      "max_attempts_per_stage": 2,
+      "context_chars": 12000
+    }
+  },
   "fallbacks": {}
 }

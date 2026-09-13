@@ -63,6 +63,10 @@ selector.
   Stop on an empty/not-ready board, a blocker, a human gate or unavailable
   native task creation. Read contract-work.md for the `create_thread` protocol.
 
+- `--light` with `--feature` (both tools): one expert-tier developer owns
+  implementation/tests/repairs, one simple-tier closer runs reviewer then
+  verifier. Claim with `--profile light`. Forbidden for Blender/critical-
+  lifecycle/concurrency/replay-codec/data-loss risk; incompatible with `--batch`.
 - `--unattended` allows advisory defaults but never approves STYLE LOCK, scope
   changes or outward actions that still require a human gate.
 - The selected architecture is binding: 2D keeps engine-free deterministic

@@ -21,6 +21,18 @@ Reserve with `claim --spec ID --owner <session-id>` before writing. One SPEC per
 run. Optional `--batch N` requires user-authorized batch execution; keep N bounded,
 stop at a human gate/blocker, and preserve each project's session restrictions.
 
+`--feature --light` reserves with `claim --profile light`; it is available to both
+tools. The recorded run profile is immutable across resume/recovery — recovering a
+run with the other profile fails `profile_mismatch`. Light is a cost-aware execution
+shape, not a weaker acceptance contract: one expert-tier developer owns
+implementation, focused tests and repairs; one fresh simple-tier closer completes the
+reviewer and verifier assignments sequentially. It permits one active specialist, two
+attempts per stage and a 12,000 character context packet by default (`profiles.light`
+in model-policy.json). Separate tester/architect roles and `--batch` are forbidden.
+Critical lifecycle, replay-codec, concurrency, data-loss and Blender risks require the
+standard profile. Final gates, source hashes, manual evidence, ART dependencies and
+normal player-path verification remain mandatory.
+
 
 ## Chain modifier
 
@@ -38,6 +50,10 @@ can go straight to expert. Independent review uses a suitable floor for the revi
 risk. Never substitute one provider's models in the other tool. Do not edit global
 model settings. Recommended Codex chat orchestrator: Sol high; the user's selected
 primary model remains unchanged by this skill.
+
+The light profile maps the developer role to the expert tier and reviewer/verifier
+to the simple tier for whichever tool is running, unless `profiles.light` (Codex) or
+`claude.profiles.light` (Claude) pins an explicit `implementer`/`closer` model.
 
 
 Claude Code accepts a per-spawn model but no per-spawn effort. Each role agent pins

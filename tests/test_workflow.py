@@ -52,6 +52,11 @@ class WorkflowTests(unittest.TestCase):
         return {"role": role, "goal": "Implement the bounded rule", "tool": "codex", "complexity": "simple",
                 "context": ["SPECS/backlog/TASK-1.md"], "write_paths": paths if paths is not None else ["domain/rule.py"]}
 
+    def light_request(self, role="developer", tool="codex", risk=None):
+        return {"role": role, "goal": "exercise light routing", "tool": tool, "complexity": "simple", "profile": "light",
+                "risk": risk or {}, "context": ["SPECS/backlog/TASK-1.md"],
+                "write_paths": [] if role in {"reviewer", "verifier"} else ["domain/rule.py"], "attempt": 1}
+
     def finish(self, assignment, changed=None):
         return work.finish_assignment(self.root, assignment, {"status": "DONE", "summary": "Checked", "changed_files": changed or [],
                                                               "findings": [], "checks": [], "blockers": []})
@@ -153,6 +158,65 @@ class WorkflowTests(unittest.TestCase):
         self.assert_error("reasoning_mismatch", work.finish_assignment, self.root, a["assignment_id"], result)
         result["actual_reasoning"] = "xhigh"
         self.assertEqual("DONE", work.finish_assignment(self.root, a["assignment_id"], result)["status"])
+
+    def test_light_profile_derives_from_tiers_for_both_tools(self):
+        # Zero-config default: no policy.profiles.light configured anywhere.
+        limits = work.profile_config(work.policy(self.root), "light")
+        self.assertEqual((1, 2, 12000), (limits["max_concurrent_agents"], limits["max_attempts_per_stage"], limits["context_chars"]))
+        codex_dev = work.route(self.root, self.light_request("developer", "codex"))
+        self.assertEqual(("gpt-6-astra", "high", "light", "light-implementer"),
+                         (codex_dev["model"], codex_dev["reasoning"], codex_dev["profile"], codex_dev["tier"]))
+        for role in ("reviewer", "verifier"):
+            closer = work.route(self.root, self.light_request(role, "codex"))
+            self.assertEqual(("gpt-5.6-luna", "xhigh", "read-only"), (closer["model"], closer["reasoning"], closer["sandbox"]))
+        claude_dev = work.route(self.root, self.light_request("developer", "claude"))
+        self.assertEqual(("claude-opus-5", "xhigh", "xhigh", "agent-frontmatter"),
+                         (claude_dev["model"], claude_dev["reasoning"], claude_dev["tier_reasoning"], claude_dev["effort_source"]))
+        claude_closer = work.route(self.root, self.light_request("reviewer", "claude"))
+        # reviewer's pinned frontmatter effort (xhigh, the "complex" default) does not match the
+        # light/simple target (medium): reported honestly instead of silently claimed.
+        self.assertEqual(("claude-sonnet-5", "xhigh", "medium"), (claude_closer["model"], claude_closer["reasoning"], claude_closer["tier_reasoning"]))
+        self.assertTrue(any("no per-spawn effort" in reason for reason in claude_closer["reasons"]))
+
+    def test_light_profile_explicit_override_and_guards(self):
+        config = work.policy(self.root)
+        config["profiles"] = {"light": {"implementer": {"model": "custom-impl", "reasoning": "high"},
+                                         "closer": {"model": "custom-closer", "reasoning": "low"},
+                                         "max_concurrent_agents": 1, "max_attempts_per_stage": 2, "context_chars": 500}}
+        config["claude"]["profiles"] = {"light": {"implementer": {"model": "claude-custom", "reasoning": "high"}}}
+        self.put("pipeline/model-policy.json", config)
+        self.assertEqual("custom-impl", work.route(self.root, self.light_request("developer", "codex"))["model"])
+        self.assertEqual("custom-closer", work.route(self.root, self.light_request("reviewer", "codex"))["model"])
+        self.assertEqual("claude-custom", work.route(self.root, self.light_request("developer", "claude"))["model"])
+        self.assert_error("light_role_not_allowed", work.route, self.root, self.light_request("tester", "codex"))
+        self.assert_error("light_profile_incompatible", work.route, self.root,
+                          self.light_request("developer", "codex") | {"execution_scope": "evaluated-authoring", "frozen_model": "x", "allowlist": ["x"]})
+        for risk in ("blender", "replay_codec", "concurrency", "critical_lifecycle", "data_loss"):
+            self.assert_error("light_risk_requires_standard", work.route, self.root, self.light_request("developer", "codex", {risk: True}))
+        self.assert_error("external_blocker", work.route, self.root, self.light_request("developer", "codex") | {"failure_kind": "environment"})
+        self.assert_error("attempt_budget_exhausted", work.route, self.root, self.light_request("developer", "codex") | {"attempt": 3})
+        for broken in ({"implementer": {"model": 1, "reasoning": "high"}}, {"max_attempts_per_stage": 0}):
+            self.put("pipeline/model-policy.json", config | {"profiles": {"light": broken}})
+            self.assert_error("policy_invalid", work.policy, self.root)
+
+    def test_claim_light_profile_recovery_and_metrics(self):
+        self.card()
+        self.put("domain/rule.py", "VALUE = 1\n")
+        claimed = work.claim(self.root, "TASK-1", "session-a", profile_name="light")
+        self.assertEqual("light", claimed["profile"])
+        self.assertEqual("light", work.resume(self.root, claimed["run_id"])["profile"])
+        run_path = self.root / ".ai/gp/runs" / claimed["run_id"] / "run.json"
+        run = json.loads(run_path.read_text())
+        run["owner"], run["stage"] = "session-a", "review"
+        run_path.write_text(json.dumps(run))
+        lock = self.root / ".ai/gp/claims/TASK-1.json"
+        lock_value = json.loads(lock.read_text())
+        lock_value["heartbeat"] -= 7200
+        lock.write_text(json.dumps(lock_value))
+        self.assert_error("profile_mismatch", work.claim, self.root, "TASK-1", "session-b", True, "standard")
+        recovered = work.claim(self.root, "TASK-1", "session-b", True, "light")
+        self.assertEqual("light", recovered["profile"])
+        self.assertEqual({"light": 1}, work.metrics(self.root)["profiles"])
 
     def test_context_budget_and_explicit_allowlist(self):
         self.card()

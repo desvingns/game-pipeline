@@ -4,6 +4,35 @@ All notable changes to game-pipeline. SemVer: PATCH = wording, MINOR = additive
 (new agents, new profiles, new optional sections), MAJOR = renames or JSON-shape
 changes.
 
+## [1.3.0] — 2026-09-13
+
+### Added
+
+- `--feature --light` execution profile for both tools: `claim --profile light`
+  dispatches one expert-tier developer that owns implementation, its focused
+  tests and up to one repair pass (no separate tester/architect assignment),
+  then one fresh simple-tier closer completes reviewer and verifier
+  sequentially. The recorded run profile is immutable across resume/recovery
+  (`profile_mismatch`). Forbidden for Blender, replay-codec, concurrency,
+  critical-lifecycle or data-loss risk (`light_risk_requires_standard`) and
+  for any role outside developer/reviewer/verifier (`light_role_not_allowed`);
+  incompatible with `--batch`.
+- `profiles.light` (Codex) and `claude.profiles.light` (Claude) in
+  `pipeline/model-policy.json`: optional `implementer`/`closer` model
+  overrides, else derived from the expert/simple tier; tool-neutral limits
+  (`max_concurrent_agents: 1`, `max_attempts_per_stage: 2`, `context_chars:
+  12000` by default). In Claude Code, the closer's pinned frontmatter effort
+  can exceed the simple tier's target; the honest `tier_reasoning_effort`
+  reporting from 1.2.0 covers this gap the same way it covers tiers.
+- `metrics` reports a `profiles` breakdown (run counts per profile).
+
+### Migration
+
+- Promoted from a project-local prototype (Codex-only) to the generator,
+  generalized to Claude Code. Re-run bootstrap `--force`/`--adopt` to receive
+  the updated runbooks and `gp_work.py`; an existing `profiles.light` block in
+  `pipeline/model-policy.json` is preserved and used as an explicit override.
+
 ## [1.2.0] — 2026-09-12
 
 ### Changed

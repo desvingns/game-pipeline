@@ -56,6 +56,14 @@
         },
         "orchestrator": {
           "type": "object"
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "light": {
+              "$ref": "#/$defs/lightProfile"
+            }
+          }
         }
       }
     },
@@ -74,6 +82,40 @@
     "context_chars": {
       "type": "integer",
       "minimum": 1
+    },
+    "profiles": {
+      "type": "object",
+      "properties": {
+        "light": {
+          "$ref": "#/$defs/lightProfile"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "lightProfile": {
+      "type": "object",
+      "description": "Every field is optional; an absent field falls back to the generator default (limits) or the target tier (implementer/closer).",
+      "properties": {
+        "implementer": {
+          "type": "object"
+        },
+        "closer": {
+          "type": "object"
+        },
+        "max_concurrent_agents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_attempts_per_stage": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "context_chars": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
     }
   }
 }
