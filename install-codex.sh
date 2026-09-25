@@ -14,8 +14,12 @@ done
 mkdir -p "$SKILLS_ROOT"
 DEST="$SKILLS_ROOT/gp-dev"
 if [ -e "$DEST" ]; then
-    mkdir -p "$SKILLS_ROOT/archive"
-    BACKUP=$(mktemp -d "$SKILLS_ROOT/archive/gp-dev.XXXXXX")
+    # shellcheck source=lib/archive.sh
+    . "$GP_SOURCE_ROOT/lib/archive.sh"
+    if [ -n "${PET_ARCHIVE_ROOT:-}" ]; then ARCHIVE=$(gp_archive_dir "$SKILLS_ROOT" codex-skills)
+    else ARCHIVE="$SKILLS_ROOT/archive"; fi
+    mkdir -p "$ARCHIVE"
+    BACKUP=$(mktemp -d "$ARCHIVE/gp-dev.XXXXXX")
     cp -R "$DEST" "$BACKUP/"
 fi
 mkdir -p "$DEST"

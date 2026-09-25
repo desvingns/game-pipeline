@@ -154,3 +154,18 @@ Unassigned — follow-up game vertical slice and engine harness integration.
   mismatch reported).
 - NEXT: live dispatch of a `--feature --light` assignment through either tool's
   native spawn (not just `route`/`policy` unit-level checks).
+
+## 2026-09-25 — Claude: shared archive (v1.4.0)
+
+- Every archive writer honours env `PET_ARCHIVE_ROOT` (set to `D:\Pet\archive`
+  on the main machine): gp_work (gp-work, locks, claims), art-gen
+  (art-attempts), Godot runner/visual (gp-exports, gp-shots), bootstrap staging
+  (gp-bootstrap), build-marketplace (marketplace), install-codex
+  (skills/<date>/codex-skills). Layout `<root>/<project>/<YYYY-MM-DD>/<sub>`;
+  first folder per day logged in `<root>/INDEX.md`. Unset -> old `archive/`.
+- `upgrade-preview` accepts a stage inside `PET_ARCHIVE_ROOT`. Tests pin the
+  local archive (`PET_ARCHIVE_ROOT` popped/unset); new shared-archive tests:
+  `SharedArchiveTests` (workflow) and `test_10` (pipeline). Full smoke passes,
+  parity 298 files.
+- NEXT: Ground_Truth still runs the 1.3.0 scripts; re-adopt with `--force` to
+  pick this up.

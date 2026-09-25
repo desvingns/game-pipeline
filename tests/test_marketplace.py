@@ -1,8 +1,10 @@
 """Static checks for the dual-harness game-pipeline marketplace packages."""
 import json
+import os
 from pathlib import Path
 import unittest
 
+os.environ.pop("PET_ARCHIVE_ROOT", None)  # pin the project-local archive
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 

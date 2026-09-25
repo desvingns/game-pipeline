@@ -3,6 +3,8 @@
 set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$ROOT"
+# Default tests pin the project-local archive; shared-archive tests set their own root.
+unset PET_ARCHIVE_ROOT
 for script in bootstrap.sh install-codex.sh lib/*.sh tests/*.sh \
               templates/common/scripts/*.sh templates/art/scripts/*.sh templates/godot/scripts/*.sh; do
     bash -n "$script"

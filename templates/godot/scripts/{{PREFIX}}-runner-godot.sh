@@ -82,8 +82,9 @@ if [ "$EXPORT" -eq 1 ]; then
   OUT_APK="${GP_APK_OUT:-build/{{PREFIX}}.apk}"
   mkdir -p "$(dirname "$OUT_APK")"
   if [ -e "$OUT_APK" ]; then
-    mkdir -p archive/gp-exports
-    previous=$(mktemp -d archive/gp-exports/run.XXXXXX)
+    archive_root=$(gp_archive_dir . gp-exports) || emit_error "archive_unavailable" "cannot create the archive directory"
+    mkdir -p "$archive_root"
+    previous=$(mktemp -d "$archive_root/run.XXXXXX")
     mv "$OUT_APK" "$previous/"
   fi
   if "$GODOT" --headless --path "$PROJECT_DIR" --export-release "$EXPORT_PRESET" \

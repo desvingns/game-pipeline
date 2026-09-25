@@ -1,6 +1,7 @@
 """Behavioral tests of the portable workflow; fixtures are retained under out/."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -8,6 +9,8 @@ import time
 import unittest
 import uuid
 
+# The default tests pin the project-local archive; SharedArchiveTests opts in explicitly.
+os.environ.pop("PET_ARCHIVE_ROOT", None)
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "templates/common/scripts/gp_work.py"
 spec = importlib.util.spec_from_file_location("work", SOURCE)
@@ -391,6 +394,48 @@ class MigrationTests(unittest.TestCase):
         with self.assertRaises(UnicodeDecodeError):
             work.migrate(self.root, plan, True)
         self.assertTrue(src.exists())
+
+
+class SharedArchiveTests(unittest.TestCase):
+    """PET_ARCHIVE_ROOT routes every superseded file out of the project."""
+
+    def setUp(self):
+        self.shared = ROOT / "out/shared-archive" / uuid.uuid4().hex
+        os.environ["PET_ARCHIVE_ROOT"] = str(self.shared)
+        self.addCleanup(os.environ.pop, "PET_ARCHIVE_ROOT", None)
+        self.root = ROOT / "out/workflow-tests" / uuid.uuid4().hex
+        self.root.mkdir(parents=True)
+        work.adopt(self.root, True)
+        (self.root / "SPECS/backlog").mkdir(parents=True)
+        self.day_dir = self.shared / self.root.name / time.strftime("%Y-%m-%d")
+
+    def test_mutations_archive_outside_project_and_log_each_folder_once(self):
+        card = self.root / "SPECS/backlog/TASK-1.md"
+        card.write_text("# TASK-1 — Feature\n\nStatus: **BACKLOG**\n\n## Acceptance criteria\n1. It works.\n", encoding="utf-8")
+        work.claim(self.root, "TASK-1", "test-session")
+        work.adopt(self.root, True)
+        self.assertFalse((self.root / "archive").exists())
+        self.assertTrue(list((self.day_dir / "gp-work/locks").glob("*.json")))
+        lines = (self.shared / "INDEX.md").read_text(encoding="utf-8").splitlines()
+        folders = [line.split(" | ")[2] for line in lines]
+        self.assertIn((self.day_dir / "gp-work/locks").as_posix(), folders)
+        self.assertEqual(len(folders), len(set(folders)))
+
+    def test_upgrade_preview_accepts_stage_in_shared_archive(self):
+        stage = self.day_dir / "gp-bootstrap/run.test/generated"
+        (stage / ".codex/commands").mkdir(parents=True)
+        (stage / ".codex/commands/gp.md").write_text("new instruction\n", encoding="utf-8")
+        (self.root / ".codex/commands").mkdir(parents=True)
+        (self.root / ".codex/commands/gp.md").write_text("old instruction\n", encoding="utf-8")
+        plan = work.upgrade_preview(self.root, str(stage))
+        self.assertIn("-old instruction", next(x for x in plan["changes"] if x["action"] == "update")["diff"])
+
+    def test_upgrade_preview_still_rejects_unrelated_directories(self):
+        elsewhere = ROOT / "out/workflow-tests" / uuid.uuid4().hex
+        elsewhere.mkdir(parents=True)
+        with self.assertRaises(work.WorkError) as exc:
+            work.upgrade_preview(self.root, str(elsewhere))
+        self.assertEqual("path_outside_project", exc.exception.kind)
 
 
 if __name__ == "__main__":

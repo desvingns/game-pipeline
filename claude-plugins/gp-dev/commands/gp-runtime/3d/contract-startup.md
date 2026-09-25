@@ -47,7 +47,8 @@ when it has not already been supplied, including under --unattended:
 - **`git push`** — outward-facing.
 - **Changes outside the approved scope** — present the concrete choice and reason.
 
-Routine authorized replacements retain previous files in archive/. STYLE LOCK
+Routine authorized replacements retain previous files in the archive
+(`$PET_ARCHIVE_ROOT/<project>/<date>/` when set, else `archive/`). STYLE LOCK
 always refers to the actual reference sheet; a generic request to make a game
 does not approve an unseen sheet. Explicit approval of unchanged references persists.
 

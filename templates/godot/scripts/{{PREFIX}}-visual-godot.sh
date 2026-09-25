@@ -49,8 +49,9 @@ capture() {
   out="${out//\\//}"
   mkdir -p "$(dirname "$out")"
   if [ -e "$out" ]; then
-    mkdir -p archive/gp-shots
-    previous=$(mktemp -d archive/gp-shots/run.XXXXXX)
+    archive_root=$(gp_archive_dir . gp-shots) || return 1
+    mkdir -p "$archive_root"
+    previous=$(mktemp -d "$archive_root/run.XXXXXX")
     mv "$out" "$previous/"
   fi
   case "$out" in /*|[A-Za-z]:/*) output_path="$out" ;; *) output_path="$(pwd)/$out" ;; esac

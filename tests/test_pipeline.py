@@ -9,11 +9,14 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 import tomllib
 import unittest
 
 from PIL import Image, ImageDraw
 
+# The default tests pin the project-local archive; test_14 opts into the shared one.
+os.environ.pop("PET_ARCHIVE_ROOT", None)
 ROOT = Path(__file__).resolve().parents[1]
 BASH = os.environ.get("GP_TEST_BASH", "bash")
 OUT = ROOT / "out"
@@ -298,6 +301,29 @@ fi
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue((dest / "gp-dev/SKILL.md").is_file())
         self.assertEqual(Path((dest / "gp-dev/generator-root.txt").read_text().strip()), ROOT)
+
+    def test_10_shared_archive_receives_staging_and_superseded_outputs(self):
+        shared = RUN / "shared archive"
+        env = {"PET_ARCHIVE_ROOT": str(shared)}
+        cwd = RUN / "shared-archive project"
+        cwd.mkdir()
+        args = [BASH, str(ROOT / "bootstrap.sh"), "--tool=codex", "--prefix=td", "--project-name=Shared",
+                "--package=com.demo.shared", "--style-profile=flat-vector", "--non-interactive", "--no-git"]
+        for extra in ([], ["--force"]):
+            result = command(args + extra, cwd, env)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        day_dir = shared / cwd.name / time.strftime("%Y-%m-%d")
+        self.assertEqual(2, len(list((day_dir / "gp-bootstrap").glob("run.*/generated"))))
+        self.assertTrue(list((day_dir / "gp-bootstrap").glob("run.*/previous/.codex/commands/td.md")))
+        self.assertFalse((cwd / "archive").exists())
+        shot = self.cwd / "shots/shared.png"
+        shot.parent.mkdir(exist_ok=True)
+        shot.write_bytes(b"old capture")
+        self.gate("visual-godot", "--scene", "res://battle.tscn", "--out", "shots/shared.png",
+                  env={"FAKE_MODE": "crash", **env})
+        self.assertTrue(list((shared / self.cwd.name).glob("*/gp-shots/*/shared.png")))
+        folders = [line.split(" | ")[2] for line in (shared / "INDEX.md").read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(len(folders), len(set(folders)))
 
 
 if __name__ == "__main__":

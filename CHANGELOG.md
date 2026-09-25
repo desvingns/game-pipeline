@@ -4,6 +4,33 @@ All notable changes to game-pipeline. SemVer: PATCH = wording, MINOR = additive
 (new agents, new profiles, new optional sections), MAJOR = renames or JSON-shape
 changes.
 
+## [1.4.0] — 2026-09-25
+
+### Added
+
+- Optional shared archive: when `PET_ARCHIVE_ROOT` is set, every superseded or
+  staged file goes to `$PET_ARCHIVE_ROOT/<project>/<YYYY-MM-DD>/<sub>` instead of
+  the project's `archive/` — `gp_work` (`gp-work`, `gp-work/locks`,
+  `gp-work/claims`), `art-gen` (`art-attempts`), Godot runner/visual gates
+  (`gp-exports`, `gp-shots`), `bootstrap.sh` staging (`gp-bootstrap`),
+  `build-marketplace.sh` (`marketplace`) and `install-codex.sh`
+  (`skills/<date>/codex-skills`). The first creation of each folder per day
+  appends one line to `$PET_ARCHIVE_ROOT/INDEX.md`. Helpers: `gp_archive_dir`
+  in `lib/archive.sh` and `<prefix>-common.sh`, `archive_dir()` in the Python
+  scripts.
+- `upgrade-preview --generated` also accepts a staging directory inside
+  `PET_ARCHIVE_ROOT`; any other directory outside the project is still refused.
+
+### Changed
+
+- Archived locks and claims are moved with `shutil.move`, so the archive may
+  live on another drive.
+
+### Migration
+
+None. With `PET_ARCHIVE_ROOT` unset, behaviour is unchanged. Existing games pick
+the change up on their next `bootstrap --force` upgrade.
+
 ## [1.3.0] — 2026-09-13
 
 ### Added

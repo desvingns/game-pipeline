@@ -4,8 +4,8 @@
 # The generator templates remain canonical. This script creates one gp-dev plugin
 # for each harness, the two marketplace catalogs, and a self-contained generator
 # copy so a git-sourced plugin can bootstrap a fresh game without a checkout of
-# the source repository. Existing generated trees are moved to archive/ before
-# replacement; nothing is deleted.
+# the source repository. Existing generated trees are moved to the archive
+# (lib/archive.sh) before replacement; nothing is deleted.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,6 +16,8 @@ MARKET="$ROOT/templates/marketplace"
 
 # shellcheck source=lib/render.sh
 . "$ROOT/lib/render.sh"
+# shellcheck source=lib/archive.sh
+. "$ROOT/lib/archive.sh"
 
 DRY=0
 CHECK=0
@@ -307,7 +309,7 @@ fi
 
 if [ "$DRY" = 0 ]; then
     stamp="$(date -u +%Y%m%dT%H%M%SZ)-$$"
-    ARCHIVE_DIR="$ROOT/archive/marketplace/$stamp"
+    ARCHIVE_DIR="$(gp_archive_dir "$ROOT" marketplace)/$stamp"
     WORK="$ARCHIVE_DIR/work"
     mkdir -p "$WORK"
     archive_existing "$ROOT/claude-plugins/gp-dev"

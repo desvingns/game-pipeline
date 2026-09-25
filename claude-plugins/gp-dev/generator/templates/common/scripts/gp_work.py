@@ -1,7 +1,8 @@
 """Portable, dependency-free workflow kernel. Run through <prefix>-work.sh.
 
 The board is Markdown; .ai/gp holds recoverable execution records, never another
-editable backlog. All mutations preserve prior versions in archive/.
+editable backlog. All mutations preserve prior versions in the archive: the shared
+$PET_ARCHIVE_ROOT/<project>/<YYYY-MM-DD>/ when that variable is set, else archive/.
 """
 from __future__ import annotations
 
@@ -112,6 +113,35 @@ def rel(root, path):
     return path.relative_to(root).as_posix()
 
 
+def shown(root, path):
+    """Project-relative when inside the project, absolute POSIX for the shared archive."""
+    return rel(root, path) if path.is_relative_to(root) else path.as_posix()
+
+
+def shared_archive():
+    value = os.environ.get("PET_ARCHIVE_ROOT", "").strip()
+    return Path(value) if value else None
+
+
+def archive_dir(root, sub):
+    """Where superseded files go; nothing is ever deleted.
+
+    With PET_ARCHIVE_ROOT set: $PET_ARCHIVE_ROOT/<project>/<YYYY-MM-DD>/<sub>, and the
+    first creation of that folder per day appends one line to $PET_ARCHIVE_ROOT/INDEX.md.
+    Without it: the project-local archive/<sub> (unchanged behaviour).
+    """
+    shared = shared_archive()
+    if shared is None:
+        return root / "archive" / sub
+    day = time.strftime("%Y-%m-%d")
+    target = shared / root.resolve().name / day / sub
+    if not target.is_dir():
+        target.mkdir(parents=True, exist_ok=True)
+        with (shared / "INDEX.md").open("a", encoding="utf-8") as stream:
+            stream.write(f"{day} | {root.resolve().as_posix()} ({sub}) | {target.as_posix()} | auto backup (gp_work)\n")
+    return target
+
+
 def safe_id(value):
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,100}", value):
         fail("invalid_id", value)
@@ -120,7 +150,7 @@ def safe_id(value):
 
 def preserve(root, path):
     if path.exists():
-        dst = root / "archive/gp-work" / uuid.uuid4().hex / rel(root, path)
+        dst = archive_dir(root, "gp-work") / uuid.uuid4().hex / rel(root, path)
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, dst)
 
@@ -162,14 +192,14 @@ def recover_mutation(root, expected_pid):
             running = exc.errno != errno.ESRCH
     if running:
         fail("mutation_busy", "The lock owner is still alive; do not steal its transaction")
-    target = root / "archive/gp-work/locks" / (uuid.uuid4().hex + "-recovered.json")
+    target = archive_dir(root, "gp-work/locks") / (uuid.uuid4().hex + "-recovered.json")
     target.parent.mkdir(parents=True, exist_ok=True)
     # Recheck identity immediately before retiring an interrupted owner.
     if load(path) != value:
         fail("lock_owner_changed", "Mutation lock changed during inspection")
-    path.rename(target)
-    event(root, "mutation_lock_recovered", previous=value, archive=rel(root, target))
-    return {"pass": True, "status": "recovered", "archive": rel(root, target)}
+    shutil.move(str(path), str(target))
+    event(root, "mutation_lock_recovered", previous=value, archive=shown(root, target))
+    return {"pass": True, "status": "recovered", "archive": shown(root, target)}
 
 
 @contextlib.contextmanager
@@ -184,9 +214,9 @@ def mutex(root):
     try:
         yield
     finally:
-        target = root / "archive/gp-work/locks" / (uuid.uuid4().hex + ".json")
+        target = archive_dir(root, "gp-work/locks") / (uuid.uuid4().hex + ".json")
         target.parent.mkdir(parents=True, exist_ok=True)
-        path.rename(target)
+        shutil.move(str(path), str(target))
 
 
 def files(root):
@@ -1159,9 +1189,9 @@ def close(root, run_id, state, evidence=None, reason=None):
         with mutex(root):
             lock = root / ".ai/gp/claims" / (run["spec"] + ".json")
             if lock.exists() and load(lock)["run_id"] == run_id:
-                target = root / "archive/gp-work/claims" / (run_id + "-reconciled.json")
+                target = archive_dir(root, "gp-work/claims") / (run_id + "-reconciled.json")
                 target.parent.mkdir(parents=True, exist_ok=True)
-                lock.rename(target)
+                shutil.move(str(lock), str(target))
         return {"pass": True, "status": "DONE", "already_closed": True}
     with mutex(root):
         ensure_owner(root, run)
@@ -1186,9 +1216,9 @@ def close(root, run_id, state, evidence=None, reason=None):
         write(root, handoff, f"# Execution handoff\n\nSPEC: {run['spec']}\nStatus: {state}\nRun: {run_id}\nEvidence: {rel(root, path)}\nRemaining: {reason or 'none'}\n")
         if state == "DONE":
             lock = ensure_owner(root, run)
-            target = root / "archive/gp-work/claims" / (run_id + ".json")
+            target = archive_dir(root, "gp-work/claims") / (run_id + ".json")
             target.parent.mkdir(parents=True, exist_ok=True)
-            lock.rename(target)
+            shutil.move(str(lock), str(target))
     return {"pass": True, "status": state, "evidence": rel(root, path), "next": "Report completion; do not start another SPEC without batch authorization"}
 
 
@@ -1298,9 +1328,14 @@ def estimate_art(request):
 
 
 def upgrade_preview(root, generated):
-    stage = inside(root, generated)
+    shared = shared_archive()
+    candidate = (root / generated).resolve()
+    if shared is not None and candidate.is_relative_to(shared.resolve()):
+        stage = candidate
+    else:
+        stage = inside(root, generated)
     if not stage.is_dir() or stage == root:
-        fail("preview_invalid", "Provide the isolated generated directory under archive/")
+        fail("preview_invalid", "Provide the isolated generated directory under the archive")
     changes = []
     protected = {"STATE.md", "ROADMAP.md", "DOCUMENTATION.md", "pipeline/profile.json", "pipeline/project.json",
                  "pipeline/model-policy.json", "pipeline/qa-contract.json", "pipeline/toolchain.json"}

@@ -38,6 +38,24 @@ DEFAULT_GEMINI_MODEL = os.environ.get("GP_GEMINI_IMAGE_MODEL", "gemini-3.1-flash
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 
+def archive_dir(sub):
+    """Superseded attempts: $PET_ARCHIVE_ROOT/<project>/<YYYY-MM-DD>/<sub> when the
+    shared archive is set (first creation per day logged in its INDEX.md), else
+    archive/<sub> in the current project. Nothing is ever deleted."""
+    shared = os.environ.get("PET_ARCHIVE_ROOT", "").strip()
+    if not shared:
+        return os.path.join("archive", sub)
+    day = datetime.date.today().isoformat()
+    project = os.path.abspath(os.getcwd())
+    target = os.path.join(shared, os.path.basename(project), day, sub)
+    if not os.path.isdir(target):
+        os.makedirs(target, exist_ok=True)
+        with open(os.path.join(shared, "INDEX.md"), "a", encoding="utf-8") as fh:
+            fh.write("%s | %s (%s) | %s | auto backup (art-gen)\n"
+                     % (day, project.replace("\\", "/"), sub, target.replace("\\", "/")))
+    return target
+
+
 def posix(path):
     """Report paths with forward slashes on every platform.
 
@@ -233,8 +251,9 @@ def main():
     def archive_previous():
         existing = [p for p in (image_path, prov_path) if os.path.isfile(p)]
         if existing:
-            os.makedirs("archive/art-attempts", exist_ok=True)
-            backup = tempfile.mkdtemp(prefix=spec["id"] + "-", dir="archive/art-attempts")
+            attempts = archive_dir("art-attempts")
+            os.makedirs(attempts, exist_ok=True)
+            backup = tempfile.mkdtemp(prefix=spec["id"] + "-", dir=attempts)
             for path in existing:
                 shutil.copy2(path, backup)
 

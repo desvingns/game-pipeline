@@ -13,6 +13,7 @@ import tempfile
 
 from PIL import Image
 
+os.environ.pop("PET_ARCHIVE_ROOT", None)  # pin the project-local archive
 ROOT = Path(__file__).resolve().parents[1]
 BASH = os.environ.get("GP_TEST_BASH", "bash")
 ENV = {**os.environ, "GP_PYTHON": sys.executable, "MSYS2_ARG_CONV_EXCL": "*", "PYTHONUTF8": "1"}

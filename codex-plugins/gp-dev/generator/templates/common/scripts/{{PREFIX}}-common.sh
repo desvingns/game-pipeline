@@ -20,6 +20,24 @@ positive_integer() { [[ "$1" =~ ^[1-9][0-9]{0,8}$ ]]; }
 native_path() {
     if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s\n' "$1"; fi
 }
+# Superseded outputs go to $PET_ARCHIVE_ROOT/<project>/<YYYY-MM-DD>/<sub> when the
+# shared archive is configured (first creation per day is logged in its INDEX.md),
+# else to <project>/archive/<sub>. Prints the directory; never deletes anything.
+gp_archive_dir() {
+    local project_root shared day base
+    project_root=$(cd "$1" && pwd -P) || return 1
+    shared="${PET_ARCHIVE_ROOT:-}"
+    if [ -z "$shared" ]; then printf '%s/archive/%s\n' "$project_root" "$2"; return 0; fi
+    if command -v cygpath >/dev/null 2>&1; then shared=$(cygpath -u "$shared"); fi
+    day=$(date +%Y-%m-%d)
+    base="$shared/$(basename "$project_root")/$day/$2"
+    if [ ! -d "$base" ]; then
+        mkdir -p "$base" || return 1
+        printf '%s | %s (%s) | %s | auto backup (gp)\n' "$day" "$(native_path "$project_root")" \
+            "$2" "$(native_path "$base")" >> "$shared/INDEX.md"
+    fi
+    printf '%s\n' "$base"
+}
 detect_gate_python() {
     local candidate
     if [ -n "${GP_PYTHON:-}" ]; then

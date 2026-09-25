@@ -7,6 +7,7 @@ import sys
 import unittest
 import uuid
 
+os.environ.pop("PET_ARCHIVE_ROOT", None)  # pin the project-local archive
 ROOT = Path(__file__).resolve().parents[1]
 BASH = os.environ.get("GP_TEST_BASH", "bash")
 
